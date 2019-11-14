@@ -1,0 +1,842 @@
+---
+title: "Measuring Stability and Change in Personal Culture Using Panel Data"
+author:
+- Kevin Kiley
+- Stephen Vaisey
+date: "Duke University"
+output:
+  bookdown::word_document2: 
+    fig_caption: yes
+    reference_docx: word-styles-reference-01.docx
+  pdf_document:
+    number_sections: yes
+header-includes: \usepackage{longtable}
+nocite: |
+  @swidler01
+bibliography: panel_change_bib.bib
+abstract: Models of population-wide cultural change tend to invoke one of two broad models of individual change. One approach theorizes that people actively update their beliefs in the face of new information. The other argues that, following early socialization experiences, individuals' dispositions are stable. We formalize these two models, elaborate empirical implications of each, and derive a simple model for comparing their prevalence using panel data. We test this model on more than 184 attitude and behavior items from the 2006-14 rotating panels of the General Social Survey. The pattern of results is more consistent with the settled dispositions model than the active updating model, and most observed change in the GSS appears to be short-term attitude change or measurement error rather than persisting changes in belief. When persistent change occurs, it is somewhat more likely to occur in younger people than older people and more common for public behaviors and beliefs about high-profile issues than private attitudes. We argue that there is a place for both models in our theory of cultural evolution but that we need more evidence on the circumstances under which each is more likely to apply.
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+library(ggdag)
+library(ggrepel)
+library(here)
+'%!in%' <- function(x,y)!('%in%'(x,y))
+
+```
+
+# Introduction
+
+Culture is an important part of social life but cultures are continuously evolving. In 1972, for example, more than 40 percent of US adults supported a law outlawing interracial marriage. Three decades later, this opinion had become so uncommon that the question was removed from the US General Social Survey. How does this kind of cultural change happen? 
+
+Attempts to account for opinion change at the societal level have produced an array of often conflicting theories about the nature of opinion formation and the ability of individuals to maintain consistent, real attitudes. Within sociology, a number of models suggest that individuals lack the cognitive tools to maintain consistent beliefs on social and political issues. As a result, they construct responses in the interview setting, drawing on ideas they hear from opinion leaders and changing their attitudes when elite discourse changes [@zaller; @converse; @perrinmcfadden]. Cohort replacement theories of attitude change assume that individuals hold opinions, that people are unwilling to alter them in the face of societal change, and that public opinion changes in response to generational turnover [@mannheim; @ryder]. Another broad array of models argue that individuals and the public at large hold "a number of real, stable, and sensible opinions about public policy" and change their opinions in response to new information [@pageshapiro: p. xi; @achen1992]. More recently, sociologists have suggested that individuals attempt to align malleable peripheral beliefs with relatively fixed "core" beliefs using social cues [@boutylinevaisey; @lakoff; @goldbergstein]. 
+
+Despite their diversity, models of aggregate attitude and behavior change often implicitly invoke one of two broad models of individual change that have their roots in theories of cultural sociology. The first of these individual-level models is an _active updating_ model that emphasizes the role of changing discourses, environments, and interactions on attitude formation. This model is rooted in a broadly pragmatist approach to social action, which claims that contemporary social environments and problems provoke people to adapt their views and make new meaning (e.g., Joas 1996, Gross 2009, Swidler 2001). The second is a _settled dispositions_ model, which emphasizes the continuing influence of durable dispositions acquired early in life. This model has affinities with the Bourdieusian tradition that de-emphasizes (though does not ignore) the current environment in favor of the "past conditions of production" (e.g., Bourdieu 1990, Vaisey and Lizardo 2016). Some models of aggregate opinion change invoke just one of these models, while others suggest that some beliefs follow one model while other beliefs follow another. Separate from this distinction is a second dimension of attitude formation that reflects degree to which individuals can consistently report the same opinion over time. Opinions can be settled but difficult to report, such as when individuals construct responses to the same question over time from a settled but diverse set of social cues [@zaller]. Attitudes can also be in a process of active updating but relatively easy to report, such as when individuals change their registered partisan affiliation.
+
+In this paper, we make these two dimensions of attitude change explicit, deduce some of their empirical implications, and derive a simple strategy for comparing the prevalence of active updating using panel data. We then apply this method to 184 items from the 2006-2014 General Social Surveys (GSS). By focusing on the pattern of attitude change at the individual level, we can elucidate the overall pattern of attitude change in the population and clarify when different accounts of aggregate opinion change apply. Because of data limitations, we cannot speak to all types of cultural objects (e.g., music styles, baby names). We do, however, investigate a wide variety of opinions, including views on politics, free speech, race, and gender roles, and practices including socializing at at bars or attending church, that are important in contemporary society.
+
+Our analysis yields several results. First, we find that the majority of what appears to be individual-level change in attitude or practice probably reflects short-term (non-persisting) change or measurement error rather than actual persistent change. Simply put, there is little evidence that U.S. adults are changing their beliefs or practices in lasting ways over this period of study. Second, settled opinions vary in how consistently individuals report the same answer. Consistent with theories that argue that individuals lack clear opinions, some survey items appear elicit inconsistent responses and a few appear to elicit random responses. At the same time, individuals are consistent on many both high- and low-profile public policy items, suggesting a greater degree of "real" attitudes than these theories suggest. third, the persistent change that we _do_ see in the data is somewhat more concentrated among younger respondents. On several items it appears that younger adults are still in the process of acquiring dispositions and habits they will take into later life. Fourth, we find that changes in social behavior (e.g., church attendance, political party membership, socializing) are more likely to be persistent than changes in private attitudes (e.g., political ideology), and individuals are more likely to report these attitudes consistently. This suggests that interactional and institutional mechanisms may provide stronger support for lasting change than pressures for intrapsychic consistency.
+
+These findings generally are more consistent with the settled dispositions model than with the active updating model and support theories claiming that cultural change tends to come through generational turnover rather than persuasion. However, there is a pattern of exceptions and caveats that can help us understand how institutions and events shape the process of cultural change and that challenge singular existing theories of attitude change and the life course. The pattern of results also supports models of attitude change that put ideological identification at the center of a network of political beliefs and suggest that individuals are more likely to make lasting changes in their partisan identification that to most specific policy positions. We argue that there is a place for both models in our theory of cultural evolution but that we need more evidence on the circumstances under which each is more likely to apply.
+
+# Theoretical Background
+
+## Belief Formation in Cultural Sociology
+
+How does cultural change happen at the individual level? Let us make the question concrete by imagining a person who answers the same question each year for several years. The question could be anything, but assume it is this GSS question: "Please tell me whether you strongly agree, agree, disagree, or strongly disagree [with this statement]: 'a working mother can establish just as warm and secure a relationship with her children as a mother who does not work.'"
+
+How does the respondent formulate a response to that question each time, year after year? To make things as explicit as possible, we can write the data-generating process formally. Although this presentation may make it seem like we are assuming rationality or conscious deliberation, this way of writing the models makes no particular cognitive assumptions at all. We will explain this in greater detail below. For now, consider the following two models:
+
+\begin{equation}
+  y_{it} = y_{it-1} + \nu_{it}
+  (\#eq:AR)
+\end{equation}
+
+\begin{equation}
+  y_{it} = U_i + \nu_{it}
+  (\#eq:FE)
+\end{equation}
+
+These models may seem similar at first glance, but they have very different implications for the pattern of individuals' responses over time. Equation \@ref(eq:AR) represents an _active updating_ model and Equation \@ref(eq:FE) represents a _settled dispositions_ model, as we explain below. Figure \@ref(fig:dag) shows these models in graphical form, which helps highlight their differences. In the next two sections, we consider each of these models and briefly discuss their connections to sociological theory. In the section after that, we discuss the conditions under which each model is more likely to apply.
+
+```{r dag, message=FALSE, fig.width=6.8, fig.cap="Different Models of Response Over Time"}
+library(ggdag)
+library(dagitty)
+aum <- 
+  dagitty("dag {
+        y1 -> y2 -> y3 ;
+        v1 -> y1 ;
+        v2 -> y2 ;
+        v3 -> y3 
+        }")
+coordinates( aum ) <-
+  list( x=c(y1 = 1, y2 = 2, y3 = 3, v1 = 1, v2 = 2, v3 = 3),
+        y=c(y1 = 2, y2 = 2, y3 = 2, v1 = 1, v2 = 1, v3 = 1) )
+
+aum_dag <- aum %>% tidy_dagitty() %>% ggdag() + 
+  theme_dag_blank() + 
+  labs(title = "Active Updating Model") +
+  scale_y_continuous(limits = c(.8,3.2)) +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  theme(plot.margin = unit(c(1,1,.2,.2), "cm"))
+
+
+sdm <- 
+  dagitty("dag {
+        U -> {y1 y2 y3} ;
+        v1 -> y1 ;
+        v2 -> y2 ;
+        v3 -> y3 
+        }")
+coordinates( sdm ) <-
+  list( x=c(y1 = 1, y2 = 2, y3 = 3, v1 = 1, v2 = 2, v3 = 3, U = 2),
+        y=c(y1 = 2, y2 = 2, y3 = 2, v1 = 1, v2 = 1, v3 = 1, U = 3) )
+
+sdm_dag <- sdm %>% tidy_dagitty() %>% ggdag() + 
+  theme_dag_blank() + 
+  labs(title = "Settled Dispositions Model") +
+  scale_y_continuous(limits = c(.8,3.2)) +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  theme(plot.margin = unit(c(1,.2,.2,1), "cm"))
+
+
+gridExtra::grid.arrange(aum_dag, sdm_dag, ncol = 2)
+
+```
+
+
+## Active Updating Model
+
+Equation \@ref(eq:AR) represents the active updating model. The respondent forms her answer by starting with what she said last time ($y_{it-1}$) and then incorporating any new considerations ($\nu_{it}$). There is no need to remember responses from even earlier time points (e.g., $y_{it-2}$) because this information gets folded into the updated response each time. Formally, Equation \@ref(eq:AR) is a Markov model, where future states depend entirely on the current state. This formal property, and this active updating model generally, is often assumed to underlie the data generation process in studies of change in and reliability of repeated survey measures [@alwin; @krosnickalwin; @houthastings]. Concerns about panel conditioning, in which a person's participation in a survey influences her subsequent answer choices, either by changing her non-survey behavior or by altering how they respond to the survey without changing behavior, also imply some sort of active updating on the part of the respondent [@warrenhalpernmanners].
+
+More informally, this AUM posits an agent that is updating her views in the face of social experience. There are formal Bayesian ways of modeling updating, and this model underlies numerous theories of rational updating in the face of new information [@achen1992], but we need not rely on any assumptions of rationality, optimality, or conscious thought for this basic process to apply. Following Gross's [-@gross09, pp. 367] pragmatist account, we could instead regard this model as consistent with an "active and creative relation to the world" that "lead[s] actors to see themselves in new ways, to value different kinds of goods, and to become attached to problem solutions that they could not have imagined previously." 
+
+Regardless of whether the exact process is rational, heuristic, discursive, embodied, or any combination of these, the key notion is that the actor continues to be influenced by the (social) environment in ways that might lead to long-term, persistent change in beliefs, practices, and identities [@gross09; @degloma]. As the person encounters new considerations throughout her life (e.g., adding working mothers to one's social network, seeing changing media representations of working mothers), she can continue to revise her views.
+
+The AUM makes no assumption about the distribution of $\nu_{it}$. Specifically, it does not assume that $\nu_{it}$ has an expected value of 0, either for any time $t$ or for any person $i$. This leaves open the possibility of a population-wide shift in responses as many people react to the same changes in the environment.
+
+
+## Settled Dispositions Model
+
+Equation \@ref(eq:FE) represents the settled dispositions model. Here each respondent begins the study period with a set tendency to respond to the question in a particular way ($U_i$). Temporary considerations, like current events, can play a role in what response she gives at each time (part of the $\nu_{it}$), but these considerations have no lasting impact beyond time $t$. As the right panel of Figure 1 makes clear, there is no mechanism by which a particular consideration can "propagate up" into the settled disposition and change the baseline for future responses. Such considerations are temporary influences only.
+
+The SDM is most consistent with the Bourdieusian model of action that emphasizes "the past conditions of production" [@bourdieulogic, pp. 66ff]. In other words, updating happened, but it happened in the past, prior to the time of the study. In this sense, $U_i$ reflects the "habitus." We will say more about this below.
+
+Like the AUM, the SDM does not require $\nu_{it}$ to be 0 in expectation for the population at time $t$, but it does assume that $\nu_{it}$ has an expected value of 0 within an individual over time. That is, current considerations can move a person from their baseline temporarily, but there is a tendency to "bounce back" to that baseline over time. The SDM thus allows for population-wide shifts in beliefs, practices, or identities at a particular time (temporary period effects), but it assumes that within individuals these shifts will be erased over time as individuals return to their baselines.
+
+Metaphorically, one can think of the active updating model as a "traveler" and the settled dispositions model as a "visitor." That is, in the active updating model, the traveler wakes up in the morning, walks in a direction for a while, goes to sleep, and then wakes up the next day to pick up the journey exactly where she left off. In the settled dispositions model, the visitor also travels in a particular direction each day but goes home at the end of the day and wakes up in the same bed each morning.
+
+The models thus differ fundamentally on their emphasis on the character of personal change. In the AUM, changes tend to persist because they propagate into future responses, shifting the baseline over time. In the SDM, changes tend to revert because each person returns to their existing baseline. We can therefore summarize the models' implications for individual change as follows: the AUM predicts _persisting change_ whereas the SDM predicts _non-persisting change_. We consider the implications of these predictions below.
+
+## Consistency in Response
+Neither model makes any assumptions about the magnitude of $\nu_{it}$, meaning that both models allow for the possibility of either high or low levels of change in responses from wave to wave. This means that we must consider separately the overall amount of change in responses from wave to wave and the persistence of this change. Knowing that there is more wave-to-wave change in one variable than another tells us little about how these two items relate to underlying theories of attitude development. However, knowing that two attitudes have the same rate of wave-to-wave change, but that one follows an active updating pattern with little random fluctuation, while the other follows a settled disposition pattern with a high amount of random fluctuation allows us to make much greater inference about the applicability of different theories to these items. 
+
+## Combining the Models
+
+These two dimensions of attitude change give us a two-by-two matrix of patterns for attitude change. The first dimension reflects what we call active updating, or the idea that more recent responses are better predictors of current responses that older responses. In other words, active updating means that when changes happen, they are more likely to persist than revert. We note here that a high degree of active updating does not imply a high _rate_ of active updating, simply the predictive power of new responses compared to older responses. Individuals might change attitudes infrequently, but once they do, their new positions are substantially better at predicting future positions than their older positions. The second dimension reflects what we call stability, or how consistent individuals are in reporting their beliefs once we account for the amount of active updating.
+
+With these two dimensions outlined, we can begin to categorize predictions of existing theories of attitude development with respect to them. Table ## sketches these two dimensions and outlines where a number of theoretical propositions align in this matrix. We consider these theories in more detail below but note at the outset that our goal here is not to make an explicit prediction for the kind of attitude change we will see for all kinds of attitudes. Instead, we seek to identify sources of tension in these existing models and provide a lens through which to interpret the overall patterns of attitude change across a wide range of types of attitudes.
+
+
+\begin{center}
+\begin{tabular}{ | c | p{4cm} | p{4cm} | } 
+\hline
+ & Low Active Updating & High Active Updating \\ 
+\hline
+High Consistency & Attitudes shaped by cohort effects (older individuals); High-profile, settled public policy questions; Core beliefs & High-profile, changing public policy questions; Public attitudes and behaviors; "Rational" beliefs and behaviors \\ 
+\hline
+Low Consistency &  \\ 
+\hline
+\end{tabular}
+\end{center}
+
+
+### Age and Attitude Formation
+
+In broad terms, cohort replacement theories of public opinion change suggest that individuals hold relatively stable opinions, that few individuals change their attitudes as they age, and that most change in public opinion must come from older individuals dying and being replaced in the population with young individuals who hold different opinions [@mannheim; @ryder; @vaiseylizardo]. Implied in these models is the notion that individuals have a period of "cohortization" in which they form beliefs.
+
+To continue the metaphor above, cohort replacement theories imagine travelers wandering around for a while (active updating) before setting up their permanent home base (settled disposition). The concept of a "cohort effect" is that the contemporary environment influences the baseline response tendency when a person is young and then stabilizes and stays "baked in" for the remainder of one's life [@elder; @bartelsjackman]. Any notion of a settled disposition (including the Bourdieusian one) requires an earlier "formative period" where something like the active updating model was operative [@vaiseylizardo]. To put it slightly differently, cohort formation requires an early period of persistent change followed by a later period characterized by either absolute stability (where the variance of $\nu_{it}$ is low) or by temporary, non-persisting changes that disappear as people revert to baseline.
+
+There is abundant evidence that adolescence and early adulthood are periods of heightened attitude change, with this change diminishing rapidly or gradually, depending on the attitude [@glenn; @inglehartbaker; @visserkrosnick]. Most theories agree that middle age (40-60) is a time of reduced attitude change, but some also posit that older individuals might also have increased susceptibility to attitude change [@visserkrosnick; @danigelis]. 
+
+Many of these studies focus on common measures of political attitudes such as ideological and partisan identification [@krosnickalwin], but Vaisey and Lizardo [-@vaiseylizardo] suggest that this pattern should be the case for a broad range of general attitudes about race and gender. Danigelis, Hardy, and Cutler [-@danigelis] also provide evidence that attitudes about economic gender equality and structural reasons for racial inequality see higher levels of "intracohort” change, a good indicator that some cohort members are changing their minds, in younger cohorts than older cohorts. Theories and evidence of secularization also suggest that most change in religious attitudes and behaviors comes through cohort replacement, rather than individuals changing their beliefs throughout their lives [@voaschaves]. 
+
+As Table ## suggests, items that reflect a cohort replacement pattern should demonstrate low active updating at the individual level for most adults in the population, but high active updating for young people. Because these approaches generally assume that beliefs are prominent in the minds of respondents, the implication is that these beliefs are reported with high consistency in adulthood. At younger ages, however, we expect more volatility as attitude development occurs. We note, however, that there is some evidence that volatility of settled beliefs increases as individuals change as well [@krosnickalwin], but we do not expect this to be the general pattern.
+
+### Inconsistent Opinions
+
+Not all cultural change occurs through cohort replacement processes, and there is abundant evidence of large-scale public opinion shifts that occur in a span of time too short to be driven entirely by cohort replacement. This suggests that, at times, even middle-aged individuals update their opinions in persisting ways. 
+
+In contrast to cohort replacement theories, a range of theories posit that, outside of a well informed elite, individuals lack consistent opinions and are unable to report them as such in a survey context [@perrinmcfadden; @bourdieu_publicopinion]. These theories tend to focus on questions of public policy, since the act of opinion creation requires much more information than individuals typically have [@zaller; @converse]. For example, when asked whether the government should spend more on health care, forming an opinion requires an individual to understand the current landscape of federal spending on health care, issues in the health care system, the potential impact of increased spending on these issues, and the benefits that he might accrue as a result. Most individuals do not have this information readily stored in their minds.
+
+Because of the cognitive demands of holding consistent opinions on these issues, these theories posit that individuals simply generate responses in the interview context, drawing on resources from their immediate social environment. This explains why individuals are susceptible to question-order, priming, and recency effects [@zaller]. However, these theories suggest that when questions of public policy receive significant media attention, individuals obtain more information and can more clearly articulate their positions on these issues. Shifts in public opinion can also come about when elites shift their opinions on issues, providing new signals to the general public.
+
+In general, then, we expect low-profile and complex public policy issues to show a low rate of active updating and a low rate of consistency. By definition, most questions of public policy should fall into this group, since only a few issues can sustain a relatively high level of public attention. The small number of high-profile issues might demonstrate a higher rate of consistency, but we do not expect high rates of active updating for most of these. However, we do spotlight one issue that saw significant change in elite opinion. In the time frame we observe (2006-2014), there was a major shift in elite opinion on the issue of rights for homosexuals. Leaders of the Democratic Party including President Barack Obama came out in favor of legalizing gay marriage, and a number of Republican Party leaders also began to express support for gay marriage. For this issue, then, we might expect that public opinion shifts notably. This should manifest as a high degree of active updating for the whole population, not just young people.
+
+Outside of a lack of information on public policy issues, there are two other reasons why individuals might demonstrate low consistency and low active updating. First, individuals might be unwilling to report socially undesirable beliefs if they hold them, and as a result obfuscate their true position. Similarly, some issues might not require a lot of information to comprehend, but might be so far from the public consciousness as to be nonsensical to respondents. We expect both of these conditions to produce a similar pattern of low active updating and low consistency.
+
+### Updating Opinions
+
+The third broad set of opinion formation processes posit that rather than elite leadership that determining a belief's malleability, individuals update their opinions across the life course in response to gathering new information and interacting with changing social environments. 
+
+Some of these approaches, common in political science, suggest that individuals consistently incorporate new information to refine their opinions over time [@achen1992; @bartelsjackman]. These models do not tend to make distinctions about what kinds of attitudes shift over time and what do not. However, for these models to be true, we would have to observe a high rate of active updating and a high rate of consistency. 
+
+Other theories suggest that only some beliefs are open to updating during adulthood. A number of theories of attitude development posit that individuals hold “core” beliefs that they use to adjudicate more peripheral attitudes, such as views on specific policy questions they face in an interview context [@boutylinevaisey; @goldbergstein]. These approaches include Lakoff’s [-@lakoff] model of moral politics, where views of the family serve as a template onto which to transpose questions of public policy, and Converse’s [-@converse] notion of social constraint, where political identity is used to form more specific policy stances as a result of information streams. In their analysis of cross-sectional data, Boutyline and Vaisey [-@boutylinevaisey] find little support for Lakoff's model and significant support for ideological identification as this "core" belief in the political space. If these  individuals have the ability to regularly assess new information against these core beliefs, they should also be able to recognize their position in a multiple-choice survey questionnaire and report them with limited error [@vaisey09]. In other words, we expect that core beliefs such as ideological identification should have high consistency and low active updating, and conversely that items that show these traits to have the potential to be core beliefs.
+
+In a similar vein of research focused on political polarization, Baldassari and Gelman [@baldassarigelman] find little increase in the correlation between specific policy positions over time, suggesting limited active updating of these items. What they do find is an increased alignment between partisan identification and policy positions. They interpret this finding as indicating that "voters are splitting along party lines according to the issues that are most salient to them, while they do not bother to adjust their (weak) preferences on the remaining issues" [@baldassarigelman: pp. 442]. This suggests that among items tapping issues of politics, partisan affiliation should demonstrate the highest level of active updating, and that it should be reported with a high degree of consistency. 
+
+### Public vs. Private Culture
+
+A final dimension that likely influences the consistency of attitude and behavior reports is the publicness of the item, or whether it is in some way externalized in public symbols, discourses, and institutions. The act of opinion construction often taps what Lizardo calls "personal declarative culture," the "explicit, symbolically mediated culture" such as language that people use to reason, evaluate, judge, and categorize objects [-@lizardo17: pp. 91]. This kind of knowledge is contradictory and flexible, meaning a person can reach and justify a range of different opinions in response to the same prompt, depending on the circumstances, which might lead to a low degree of consistency and active updating. However, when public culture provides a strong "scaffold" for individuals through clear signals of how their identities and social locations should influence how they should respond to a survey question, it becomes easier for them to maintain consistency [@lizardostrand].
+
+We have touched on this idea already with our discussion of the idea that high-profile elite opinion change might drive opinion change in the broader public, or by noting that high-profile issues might be easier to report consistently because individuals receive signals that support that position. Along the same line, items that tap some public dimension of individual behavior and attitudes are likely to show higher levels of active updating because social mechanisms, such as joining a group, can help maintain changes in ways that intrapsychic forces cannot. Any item where the burden of maintaining consistency is externalized and not in an individual's head might demonstrate both higher rates of active updating and greater consistency.
+
+### Toward Theoretical Synthesis
+
+The clearest contrast in existing theories is between models that assume that beliefs are relatively settled during adulthood (cohort replacement theories), which would produce a pattern of low active updating, and those that posit that individuals update beliefs throughout their lives (most other models), which would produce a pattern of high active updating. As such, this disagreement forms the primary structure of our analysis. A lack of evidence in favor of active updating for most individuals in the population, coupled with evidence of active updating in younger members of the population and a high degree of consistency, would generally suggest that individuals form opinions early in life and maintain them throughout adulthood, consistent with cohort replacement and habitus theories of attitude development. We should note that it is possible that individuals have finished their developmental period prior to reaching adulthood, in which case we might not observe age differences in active updating, but we should still observe high consistency and low active updating.
+
+If what we find is a diverse array of patterns, with items displaying a range of active updating and consistency, then the above theories provide a window through which to interpret these distinctions. Our goal here is neither to declare victory for one of the theoretical perspectives nor to simply say that all "matter." Rather, our objective is to improve sociological models of cultural evolution by more precisely specifying when and where different types of processes are at work. We believe achieving a better understanding of these processes will be relevant for many subfields of sociology as well as for other social science fields that study changes in beliefs and behaviors. 
+
+# Research Questions and Expectations
+
+With these considerations in mind, we ask the following questions:
+
+First, _are patterns of cultural change generally better described by the active updating model or the settled dispositions model?_ Previous work on cultural change using cross-sectional data has suggested that cohort effects are generally more important than period effects in explaining broad cultural change [@vaiseylizardo]. This implies that, in the repeated measures data on adults we will use here, we should find that the settled dispositions model performs better on most items because cohort formation should be (mostly) complete.
+
+Second, _is there evidence that younger respondents are doing more active updating than older respondents?_ As we just mentioned, in a sample of adults, the possibility exists that cohort formation may be complete for most beliefs and behaviors before the study period (i.e., before age 18). However, if some cohort formation is still occurring among younger respondents, we should see that evidence consistent with the AUM is disproportionately located among younger respondents.
+
+Third, _are there systematic differences in item content between questions that fall in different parts of our matrix?_ The preceding sections have made some specific predictions based on existing literature, but we cannot enumerate predictions for all sorts of beliefs. As we note, our approach is to use these theories as a lens through which to interpret the overall pattern of results. 
+
+# Analytic Strategy
+
+To investigate these ideas empirically, we examine 184 survey items from the 2006-2014 General Social Survey panels in search of evidence in favor of an active updating model. This period of the GSS contains three different three-wave panels, each of which surveys a sample of adults three times over a four-year period (e.g., 2008-2010-2012). Three waves of data is the minimum amount needed to compare the predictions of the active updating model and the settled dispositions model. We discuss item selection below. While a broader range of years would be preferable, the panel component of the GSS began in 2006 and was discontinued in 2014, so these years represent the full range of what we could analyze using the GSS.
+
+## Statistical Model
+
+### Basic Models
+
+Our main goal is to estimate separately the amount of active updating and the amount of non-persisting change in responses over time. We first consider measuring the amount of active updating. Our two different models make different predictions in the three-wave panel context. The AUM makes the following prediction for wave 3: 
+
+\begin{equation}
+  E(y_{i3}) = y_{i2}
+  (\#eq:AUM2)
+\end{equation}
+
+That is, the AUM predicts that a respondent's most recent response is the best available predictor of her next response. If change is persisting (i.e., if our metaphorical traveler wakes up in the same place she went to sleep in last night), then our best guess is that she will be close to where we saw her last, and previous responses will provide no additional predictive power.
+
+The SDM makes the following prediction:
+
+\begin{equation}
+  E(y_{i3}) = U_i
+  (\#eq:SDM2)
+\end{equation}
+
+Since the best estimate of $U_i$ is the mean of the respondent's two previous answers, we can rewrite the SDM prediction like this:
+
+\begin{equation}
+  E(y_{i3}) = \frac{y_{i2} + y_{i1}}{2}
+  (\#eq:SDM2B)
+\end{equation}
+
+That is, the SDM predicts that the average response of previous waves is the best predictor of the next response. If change is non-persisting (i.e., if our metaphorical visitor eventually always returns home), then taking the average of the last two places we saw her will be our best guess about the location of her home base.
+
+### Combined Model
+
+Both of the models above include $y_{i2}$ as a predictor of $y_{i3}$, but only the settled dispositions model includes $y_{i1}$ as a predictor. If the SDM is correct, $y_{i1}$ should be just as predictive as $y_{i2}$ because both are (on average) equally informative about the respondent's stable disposition. Therefore, to test for evidence of active updating we use a model that evaluates whether $y_{i2}$ carries any additional predictive power over $y_{i1}$. If the two previous estimates are equally predictive, then we can be relatively confident that the data we observe came from a settled dispositions model. However, if $y_{i2}$ is a better predictor of $y_{i3}$ than $y_{i1}$ is, we begin to observe evidence that at least some individuals in the population engage in active updating. We use the following non-linear model to estimate the relative influence of $y_{i1}$ and $y_{i2}$: 
+
+\begin{equation}
+  E(y_{i3}) = \alpha + \phi\beta y_{i2} + (1-\phi)\beta y_{i1}
+  (\#eq:MODEL)
+\end{equation}
+
+Rather than estimate separate coefficient estimates for $y_{i2}$ and $y_{i1}$, this model generates two parameter estimates of interest for each item in our analysis: $\beta$, which captures how well any combination of previous waves predicts a person's response at wave 3, and $\phi$, the relative proportion of wave 3 explained by wave 2 compared to wave 1. If the Settled Dispositions Model is the preferred data-generating process for an item, then both $y_{i2}$ and $y_{i1}$ should be equally predictive of $y_{i3}$, and $\phi$ will equal .5, meaning the best estimate of wave 3 is a function of the mean of previous waves, consistent with Equation \@ref(eq:SDM2B). If the active updating model is present in at least some respondents and wave 1 provides no additional predictive power when we control for wave 2, then $\phi$ will increase toward 1 to converge with Equation \@ref(eq:AUM2) in certain circumstances.
+
+At the same time, our estimates of $\beta$ provide a measure of the consistency of individuals' responses, contingent on the degree of active updating in responses. We can think of this parameter as analogous to an $R^2$ measure in a traditional linear model, capturing the total "predictiveness" of the model. If individuals pick a random response at each wave, the best predictor for a person at wave 3 will be the population average, and $\beta = 0$. If there is little random fluctuation between waves, once the amount of active updating is accounted for,  $\beta$ will approach 1.
+
+### Limitations of the Method
+
+Three challenges limit our ability to evaluate the relative presence of settled dispositions and active updating models using our approach. These challenges are not fatal, but put some limitations on the conclusions we will be able to reach.
+
+The first challenge is that our model is designed to allocate variance explained to each of the prior predictors rather than to assign probabilities to each data-generating process per se. Because of this, a few individuals making large persisting changes can inflate the $\phi$ estimate even if most individuals make small non-persisting changes. If we were willing to assume that persisting and non-persisting changes were drawn from the same distribution, we could make inferences about the relative proportion of people coming from each data generating process, but we have no reason to believe this assumption.
+
+The second challenge is measurement error, which is a form non-persisting change. In the attitude change literature, measurement error means different things to different authors. For some, it represents the inconsistency that results from constructing responses anew each wave [@zaller; @converse], and in that case it should not be considered "error" so much as an indicator of that process at work, since there is no "true" item to measure. For other theories, measurement error reflects individuals' inability to accurately report their response. It is also possible that measurement error simply reflects errors of selection and interpretation (misunderstanding the question or incorrect coding).
+
+Because measurement error "looks the same" as non-persisting real change (and because the latter is sometimes interpreted as the former), estimates of $\phi$ will be biased toward .5. There is evidence that many of the items explored in our analysis are measured with significant error [@alwin; @houthastings]. On the other hand, these previous studies of measurement reliability tend to conflate measurement error and non-persisting real change in attitudes, meaning that while we might have good estimates for the combination of these two processes, we cannot separate them completely. Because of this issue of measurement error, it is unlikely that $\phi$ and $\beta$ will reach 1 for any item, even if the underlying process is fully based on active updating. 
+
+The third challenge of our analysis is that we focus exclusively on predicting wave 3. If for some reason individuals have a high likelihood of changing between waves 2 and 3, then our ability to predict responses at wave 3 with either wave will be limited and $\beta$ will be low. Our model relies on the assumption that "persisting" change is relatively rare and that individuals who change between waves 1 and 2 do not also make persisting changes in the opposite direction between waves 2 and 3. If the rate of active updating is so high that individuals make changes between each wave, then the model becomes indistinguishable from the settled dispositions model with high measurement error. Then again, it may not be reasonable to consider this sort of change "persistent" in any meaningful way.
+
+In addition to these three challenges, there are two forms of change that our model is not well designed to account for. The first is change in the overall population. Since our model includes an intercept, changes that shift all responses toward one end of the scale are absorbed into that term and not accounted for in our $\phi$ estimates. The second is change in the variance of responses. If all individuals shift outward or inward toward the population mean but maintain their relative position in the overall distribution, this change will be absorbed into $\beta$ but not enter into $\phi$.
+
+Despite these limitations, the model is capable of detecting the presence of persisting change even in the presence of high levels of measurement error. Because of this, it is best to think of our approach as seeking any evidence in favor of active updating, rather than allocating probabilities to each model. We can only detect whether there is any evidence of persisting belief changes, and therefore whether there is any evidence that active updating is taking place in the population.
+
+
+## Analysis Steps
+
+Our analysis proceeds in three steps to answer our three research questions. First, we evaluate the overall evidence in support of the active updating model. To do this, we compare for each item the Bayesian Information Criteria (BIC) of a model estimated using Equation \@ref(eq:MODEL) with a free estimate of $\phi$ to a model that constrains $\phi= .5$. We calculate the posterior probability that the model with the free parameter fits the data better. If the model with the constraint is preferred, then we conclude that both wave 1 and wave 2 are equally good predictors of wave 3, meaning there is no evidence that respondents are actively updating on that item.
+
+Second, for variables that do show at least some evidence of active updating ($\phi > 0.5$), we ask whether the persistent change is disproportionately concentrated among younger respondents. To test this, we re-estimate our original model and allow $\phi$ to have different values above and below a given age cutoff. Rather than test a single age cutoff, we again use BIC comparisons to evaluate whether including the dummy variable improves the model fit using a cutoff of every age between 20 and 45. We test a range of cutoffs to ensure robustness of the overall pattern to specific ages.
+
+Finally, with these findings in hand, we consider whether there are any meaningful patterns in the relative distribution of evidence for AUM across variables as suggested by existing theories. Although, as we discussed above, previous work gives some indications about what we might expect, the approach here will necessarily be largely inductive.
+
+
+## Item Selection
+
+We want to test our model on as broad a range of items tapping attitudes, beliefs, and social behaviors as possible. To do so, we estimate the model in equation \@ref(eq:MODEL) on data from the three different three-wave panel data sets of the General Social Survey, conducted from 2006 through 2014.
+
+We sought measures of attitudes, beliefs, self-assessments, self-perceptions, and social behaviors that were asked in three waves. These questions tended to come from the "core" of the GSS, a set of questions asked in each wave. Rotating topical modules asked during the panels were only asked in select waves or were not asked consistently to the same people over time, leaving too few cases with complete data to analyze.
+
+Since our theoretical framework focuses on attitudes, beliefs, and social behaviors, we excluded from our analysis questions that focused on demographic characteristics (marital status, household size, region, gender, race, ethnicity), work activity (employment status, income, hours worked, size of workplace), objective socioeconomic status (years of education and highest degree, home ownership), and evaluations of a respondent by the interviewer. We also exclude questions that ask about an individuals' childhood. While testing these questions with our method is possible, they are beyond the scope of our theoretical framework. To organize our presentation of such a large number of variables, we follow Hout and Hastings [-@houthastings] and group questions into 15 categories based on their subject material. Questions in the same category tend to be asked in the same block during the survey and have the same structure, such as questions about confidence in institutional leaders, questions about public spending, and questions about social life. 
+
+We also follow Hout and Hastings [-@houthastings] in recreating some commonly used scales designed to capture attitudes about gender roles, access to abortion, and social trust. This includes Rossi's six-question scale of support for abortion and a seven-question scale which includes the question asking about abortion under any circumstances ("abany"). We use Smith's [-@smith97] scale of "misanthropy" by combining questions about how helpful, fair, and trustworthy people are. We use four questions to create a scale of gender role attitudes [@cotterhermsenvanneman].
+
+Like Hout and Hastings, we combine civil liberties items into six scales about the freedom of atheists, communists, militarists, racists, and, in the 2010-14 panel, Muslim clergymen. We combine four parallel questions about how frequently individuals socialize to create a "social life" scale. We combine four questions about support for suicide under different circumstances. We also created a scale of support for police use of violence against criminal suspects by averaging five binary questions about the conditions under which individuals support police use of violence.
+
+In total, we test the model on 184 GSS items, including the composite scales.[^coarsened] For each question, we use all cases for which the respondent gave responses in all three waves. Models are estimated using weights that account for the GSS's sampling design as well as non-response adjustment.
+
+[^coarsened]: To ensure that our estimates of $\phi$ are not simply artifacts of response scale construction, we estimate the model on coarsened versions of items, generated by collapsing responses to questions with more than three response options into scales of two or three response options. These results are reported in an the Appendix.
+
+# Results
+
+```{r}
+load(here("data", "results_df.Rdata"))
+load(here("data", "label_vars.Rdata"))
+load(here("data", "aum_vars.Rdata"))
+
+```
+
+
+Our model generates two parameter estimates of interest for each GSS item in our analysis: $\beta$, our measure of consistency, captures how well any combination of previous waves predicts a person's response at wave 3. High values of $\beta$ indicate that individuals are relatively consistent in their responses, once we control for the amount of active updating. $\phi$ is our measure of active updating and captures the relative proportion of wave 3 explained by wave 2. If responses are generated through a settled dispositions model, then $\phi$ will be .5 (i.e., both wave 1 and wave 2 are equally good predictors of wave 3). As the evidence of active updating increases, $\phi$ will increase toward 1. Both $\phi$  and $\beta$ equaling 1 would indicate that all individuals who changed between waves 1 and 2 persisted in their change, that an item was measured with no measurement error, and there was no additional change between waves 2 and 3. This is a highly unlikely scenario. 
+
+
+## Evidence for Active Updating
+
+To evaluate the evidence in favor of the active updating model, we compare for all 184 items the Bayesian Information Criteria (BIC) of a model with a free estimate of $\phi$ to a model that constrains $\phi= .5$. If the model with the constraint is preferred, then there is no evidence that respondents engage in an active updating process with respect to that item.
+
+Figure \@ref(fig:phihist) plots the distribution of $\phi$ estimates for the 184 items evaluated in this analysis and the posterior probabilities that the model without the constraint fits the data better, generated by comparing the BIC from models with and without the constraint.
+
+```{r phihist, message=FALSE, fig.width=6.8, fig.cap="Distribution of phi estimates and probabilities that items show evidence of active updating."}
+
+res.df %>%
+  filter(grepl("_c", var)==FALSE) %>%
+  select(var, p, prob_aum) %>%
+  gather(key = "key", value = "value", -var) %>%
+  mutate(key = recode(key, "p"="Phi estimates", "prob_aum"="Probability of some active updating")) %>%
+  ggplot(aes(x = value, y=..count../sum(..count..))) +
+  geom_histogram(fill = "gray", color = "black", bins = 10) + 
+  geom_vline(xintercept = .5, color = "black", linetype = 2) + 
+  theme_classic() + 
+  facet_wrap(~key, scales = "free_x") +
+  labs(x = "", y = "Proportion of items") + 
+  theme(axis.title=element_text(size=9))
+```
+
+
+\begin{figure}[t]
+\includegraphics{figures/aum_prob_dist.pdf}
+\centering
+\caption{Distribution of phi estimates and probabilities that items show evidence of active updating.}
+\label{fig:phi_hist}
+\end{figure}
+
+On the left side of the figure, we see that the majority of $\phi$ estimates fall between .5 and .6, meaning that wave 2 is only a slightly better predictor than wave 1 for most items. This suggests that if active updating is happening in these responses, it is relatively infrequent or small compared to temporary change and measurement error. 
+
+To provide a concrete example, consider the GSS question that asks respondents whether they think it should be possible for a woman to receive a legal abortion if she became pregnant as a result of rape, to which individuals can respond either "yes" or "no." This produces a $\phi$ estimate of 0.62, above the 75th percentile of all $\phi$ estimates. Of the 2259 people who responded to the question in three waves, 257 changed between waves 1 and 2, and only 147 (57 percent) of those individuals maintained the same response at wave 3. Under the settled disposition model, we would expect that about 50 percent or 129 individuals would maintain the same response, so we really only have evidence that about 18 individuals or less than one percent of the sample showed evidence of persisting attitude change. In other words, even for the items that do show strong evidence of active updating, the overall rate of attitude change in the population is small.
+
+The right side of Figure \@ref(fig:phihist) shows that while the majority of items prefer the free parameter, 73 items (about 40 percent of the total) prefer the constraint, meaning these items show no evidence of active updating over this period. That is, although respondents might give different answers to these items in any particular wave because of measurement error or a transient change of opinion, they will tend to revert to their previously held position. This group includes many items addressing abortion, civil liberties, confidence in institutions, and views on race and gender.
+
+We will discuss in more detail below how different items perform. To answer our first question, however, we need only focus on the overall distribution. We find that about 40 percent of items show no evidence at all for active updating among GSS respondents. And among items that do show some evidence of persistent change, very few come close to approaching 1, meaning that for almost all items, measurement error or non-persistent change tends to be much more common than persistent changes. We can only be really confident in detecting persistent change among a small minority of items, perhaps 1 in 5. This means that most of the "change" that shows up in the GSS panels reflects some combination of measurement error or non-persistent change.
+
+## Age Heterogeneity
+
+Our second research question is about whether there is evidence of cohort formation on some items. That is, we want to see if there is evidence that younger respondents are updating their views more than older respondents. Although it's impossible for any item to determine what proportion of people are following each data-generating process, it is possible to compare the age distribution of evidence for updating in each item.
+
+Of the 111 items that showed evidence for active updating in the last section, 23 showed differential effects of age for more than 50 percent of cutoff ages we tested, meaning the majority did not. Figure \@ref(fig:agegroupcomparison) plots the estimates of these 23 items for individuals above 30 and individuals equal to or below 30 to get a sense of the magnitude of difference between older and younger individuals on these items.
+
+```{r agegroupcomparison, message=FALSE, fig.width=6.8, fig.height=8, fig.cap="Comparison of phi estimates for individuals over and equal to to less than 30 years old."}
+
+load(here("data", "age_results.Rdata"))
+load(here("data", "good_vars.Rdata"))
+
+
+bind_rows(age.results) %>%
+  mutate(ci.lower = estimate - 1.645 * std.error,
+         ci.upper = estimate + 1.645 * std.error) %>%
+  left_join(good_vars) %>%
+  mutate(age = recode(age, "old"="Over 30", "young"="30 & under")) %>%
+  ggplot(aes(x = reorder(var.name, estimate), y = estimate, color = age)) + 
+  geom_hline(yintercept = .5, color = "black", linetype = 2) + 
+  geom_pointrange(aes(ymin = ci.lower, ymax = ci.upper)) + 
+  coord_flip() + 
+  theme_minimal() + 
+  scale_color_manual(values = c("black", "gray")) + 
+  labs(x = "", y = "Phi estimate", color = "") +
+  theme(axis.text=element_text(size=7),
+        axis.title=element_text(size=9),
+        legend.position = "bottom")
+
+```
+
+
+\begin{figure}[t]
+\includegraphics{figures/age_differences_phi.pdf}
+\centering
+\caption{Comparison of $\phi$ estimates for individuals over and equal to to less than 30 years old.}
+\label{fig:age_group_comparison}
+\end{figure}
+
+The majority of items that show evidence for age concentration show that active updating is more prevalent among younger respondents than older respondents. These items include views on affirmative action, women in the workforce, and politics; several civil liberties items; general views of whether people can be trusted; and views on whether doctors should let terminal patients die. These items tend to be in categories where a large proportion showed no evidence of active updating, which suggests an overall trend of these views being formed earlier in life (i.e., prior to becoming eligible for the GSS at 18) and remaining relatively stable for the rest of life.
+
+For some items, such as whether individuals can be trusted, political views, whether physicians should allow terminal patients to die, and whether companies should make special efforts to hire and promote women to address pass discrimination, all evidence of active updating disappears for individuals over 30. This suggests that these items follow an "impressionable years" pattern, where early adulthood is a time when these opinions are still malleable, but that over time they harden into "durable dispositions" [@vaiseylizardo; @krosnickalwin; @alwinkrosnick]. For other items, such as how important people believe it is for children to be popular and views on how much the government should spend on health care, there is still evidence of active updating in older individuals even though it is substantially less than for younger individuals. This pattern is consistent with the "increasing persistence" hypotheses.
+
+Eight of these items show a negative effect of being below the age cutoff on the $\phi$ value, meaning that younger people showed _less_ evidence of active updating than older individuals. These items include how often individuals were active in religious activities, views on suicide in the case of bankruptcy, views on whether aging parents should live with their children, and views on whether police should be allowed to use force against suspects who are verbally abusive toward them. Some of these items, such as views on whether aging parents should live with their children, might be things young people are not forced to consider until later in life and as a result do not form clear opinions until that exposure. This pattern where older individuals change their attitudes and behaviors at higher rates than younger individuals is relatively unanticipated in the attitude change literature [@visserkrosnick; @danigelis], and suggests greater heterogeneity in the relationship between age and attitude change than previous theorizing has accounted for.
+
+The remaining 89 items explored in this analysis (just under half of all items) show evidence for some active updating but do not show consistent evidence for age heterogeneity, again suggesting a more complicated relationship between age and attitude change than previously theorized. However, this does not mean these show strong evidence of an active updating model. These items may simply be susceptible to updating for a small proportion of the population.
+
+## Item heterogeneity
+
+While there is a high proportion (40 percent) of items that show no evidence of active updating, and those that do show evidence show only weak support for active updating, it is difficult with just these findings to draw any broad conclusions about how these results speak to theories of attitude development and change. Here we bring in our second dimension of attitude change, consistency in responses, to clarify the overall pattern. 
+
+Figure \@ref(fig:phibetascatter) plots the $\phi$ and $\beta$ estimates for items colored by whether they preferred the $\phi = .5$ constraint or not. Although we discuss the pattern of items below, we label a few items that stand out. Items tend to prefer the $\phi=0.5$ constraint for a combination of two reasons: because wave 1 and wave 2 have equal predictive power ($\phi$ is close to .5) or because the measure is so unpredictable ($\beta$ is low) that neither wave 1 nor wave 2 has much predictive power, making any observed active updating close to meaningless. 
+
+```{r phibetascatter, message=FALSE, fig.width=6.8, fig.height = 6.0, fig.cap="Distribution of beta and phi estimates for GSS items, by whether model prefers phi = .5 constraint."}
+res.df %>%
+  filter(grepl("_c", var)==FALSE) %>%
+  mutate(aum = ifelse(var %in% aum_vars, "\nPersistent\nChange\n", "\nNo Persistent\nChange\n")) %>%
+  ggplot(aes(x = p, y = b1)) + 
+  geom_point(aes(fill = aum, shape = aum)) + 
+  scale_shape_manual(values = c(21, 22)) + 
+  scale_fill_manual(values = c("gray", "black")) + 
+  geom_text_repel(data = label.vars, aes(label = var.name), size = 3) + 
+  theme_minimal() +
+  labs(x = "Phi estimate", y = "Beta estimate", fill = "", shape = "") + 
+  theme(axis.title=element_text(size=9))
+```
+
+
+\begin{figure}[t]
+\includegraphics{figures/phibeta_scatter.pdf}
+\centering
+\caption{Distribution of beta and phi estimates for GSS items, by whether model prefers phi = .5 constraint.}
+\label{fig:phibeta_scatter}
+\end{figure}
+
+Items showing evidence for active updating tend to have $\phi$ estimates greater than .55, and most have $\beta$ estimates greater than .6. A small group of variables, including confidence in the leadership of the executive branch of the federal government have low $\beta$ estimates, meaning that prediction at wave 3 is difficult, but have large $\phi$ estimates, meaning that wave 2 is still a better predictor than wave 1. 
+
+Which items show the strongest evidence for active updating? There is no way we can possibly discuss all 184 items in detail without the discussion becoming tedious. Although we include $\phi$ estimates for all items in Appendix B, Figure \@ref(fig:summary) summarizes the distributions of $\phi$ by the content of the question. We constrain items that showed no evidence of active updating to $\phi = .5$. In addition to showing the median and interquartile range of each distribution, the figure also highlights the item in each group that shows the greatest degree of evidence for active updating. 
+
+```{r summary, message=FALSE, fig.width=6.8, fig.height=9.0, fig.cap="Summary of phi estimates for all items, by topical group."}
+load(here("data", "summary_plot_data.Rdata"))
+
+plot.data %>%
+  ggplot(aes(x = reorder(small.cat, median))) + 
+  geom_pointrange(aes(y = median, ymin = q25, ymax = q75)) + 
+  geom_point(aes(y = min), shape = 21) + 
+  geom_point(aes(y = max),shape = 21) + 
+  geom_text(aes(y = max, label = var.name), size = 2, position = position_nudge(y = .07)) + 
+  coord_flip() + 
+  theme_minimal() + 
+  theme(
+    strip.background = element_blank(),
+    strip.text.x = element_blank(),
+    strip.placement = "outside",
+    legend.position = "none",
+    legend.title = element_blank(),
+    axis.text=element_text(size=9),
+    legend.text=element_text(size=9)
+    )  +
+  expand_limits(y = .9) +
+  labs(x = "", y = "Phi estimate")
+
+```
+
+
+
+\begin{figure}[!ht]
+\includegraphics{figures/summary_plot.pdf}
+\centering
+\caption{$\phi$ estimates for all items by topical group.}
+\label{fig:summary}
+\end{figure}
+
+There is a lot to process, even in this summary figure. The main takeaway is that, even for items that show some evidence for active updating, the values of $\phi$ are still quite low in absolute terms. Only two groups of items have median $\phi$ values above 0.6: public spending and religious activity. In general, then, it is accurate to say that most of the "change" measured by the GSS is not persistent but some combination of measurement error and short-term fluctuations.[^error]
+
+[^error]: While we cannot control for measurement error in our analysis, we can take steps to mitigate its impact. Appendix B presents results comparing items with more than three scale points to coarsened versions of these question with either two or three scale points. As noted previously, low measurement error might be a reasonable assumption for some items. Previous studies using different approaches to measuring the reliability of survey reports suggest that some items captured in our study, such as whether a person owns a gun, are measured with a high degree of reliability ($> 0.9$) [@houthastings]. For other items, such as confidence in the leadership of major companies ($\phi = .58$), reliability might be as low as 0.5. There is very little correlation ($\rho = .165$) between our $\phi$ estimates and reliability estimates.
+
+Consistent with the findings and theory of Vaisey and Lizardo [-@vaiseylizardo], we see that over half of items in the gender, family, race, sex, civil liberties, and confidence in institutions groups show no evidence for updating (see Appendix B). These categories also contain several items that show evidence of active updating in younger cohorts, suggesting that these items became settled by the time respondents entered the GSS sample. Views on these "core" issues are likely shaped by early socialization experiences and mostly settled by the time a respondent reaches adulthood (and thus becomes eligible to participate in the GSS). This means that, for most of these items, social change must occur through cohort succession rather than through individual change.
+
+There are several exceptions to this general pattern, however, even in categories with otherwise very low $\phi$ values. The items with the largest values generally have one or more attributes in common. We consider these attributes one by one in order to give some general impressions of the pattern.
+
+Some of the high-$\phi$ items rely on _external mechanisms_ that likely help maintain them, tapping the idea that public culture is more persistent than personal culture. If a person starts going to church or starts socializing with friends at a bar, she builds social networks that make this behavior more likely to continue. This is clear when contrasted with how often individuals socialize with friends, relatives, or neighbors, as well as how often individuals engage in "religious activities", which are more nebulous questions that display less active updating. Switching political parties (which involves changing public registration) is a more persistent change than changing political ideology (which can happen privately in the mind). Owning a gun has a high $\phi$ value because a new physical object either enters or leaves the person's possession. 
+
+Other high-$\phi$ items have a _changing referent_. That is, although the item wording is the same, the object to which the question refers may change between survey waves. The most obvious example of this is the item about confidence in the executive branch of the federal government (which has the highest $\phi$ value of all items in the analysis). The president changed between the 2008 and 2010 waves of the GSS, meaning that the question no longer referred to the same administration. If we generate separate estimates for each of the three panels (2006-10, 2008-12, and 2010-14) for the "confidence in the leadership of the executive branch of the federal government" item, we see that it is only for the middle panel (2008-12), where the president changed between waves 1 and 2, that shows significant evidence of persistent change ($\phi = .95$, $\beta = .51$). In the 2006-10 panel, waves 1 and 2 have almost no predictive power ($\beta = .10$). For the 2010-14 panel, which takes place entirely during the Obama administration, $\phi$ moves much closer to .5 and predictive power increases ($\phi = .57$, $\beta = .65$).
+
+Likewise, all of public spending items refer to whether we're spending "too much, too little, or the right amount" on different areas. The change of administration and changing federal spending policies likely affected all spending items. The same applies to most of the questions about subjective SES, where the respondent is asked questions about her personal financial or work situation (which changed for many Americans during the time of the study due to the Great Recession). If real external change is happening, we should see exactly this sort of pattern.
+
+Perhaps the most striking pattern in our findings is about questions about _gay rights_. There are 6 items that ask about some aspect of gay rights, and all show evidence for active updating. Questions about civil liberties for gays and about gay marriage are the highest in their categories. The huge public and political salience of this issue throughout the study period likely made this issue one where more people than usual were open to revising their views. By comparison, abortion attitudes show almost no evidence for change.
+
+Finally, questions about religious activity, identity and (to a lesser extent) religious beliefs generally show some evidence for active updating. In some cases, this fits with the general pattern of external mechanisms (e.g., attendance and identification are largely public acts). 
+
+### Political Beliefs
+
+Because theories of public opinion formation and the development of political beliefs form the bulk of the theoretical tension that frames this analysis, we examine these beliefs in greater detail than other items. Figure \@ref(fig:polvariables) plots the $\phi$ and $\beta$ estimates for most of the questions in our data set tapping questions of political identity, the role of government, and specific policies, broken into four general areas. We break these items up into categories and remove a few items solely for ease of viewing.
+
+```{r polvariables, message=FALSE, fig.width=7, fig.height=8, fig.cap="Phi and beta estimates for 43 political attitudes and identities."}
+left_join(res.df, good_vars) %>%
+  filter(small.cat %in% c("Politics & government", "Public spending",
+                          "Sex, sexuality & abortion") |
+           var %in% c("cappun", "divlaw", "gunlaw", "grass", "courts",
+                      "letin1a")) %>%
+  mutate(small.cat = ifelse(small.cat %in% c("Race & immigration", 
+                                             "Guns, laws, crime & police")
+                            | var %in% c("prayer", "uswary"), 
+         "Misc. policy" , small.cat)) %>%
+  filter(var %!in% c("abscale6", "absingle", "teensex", "xmarsex",
+                     "homosex", "premarsx")) %>%
+  mutate(var.name = gsub("Government", "Gov't", var.name),
+         var.name = gsub("Abortion", "Abort", var.name),
+         small.cat = ifelse(small.cat == "Sex, sexuality & abortion",
+                            "Abortion & sex", small.cat)) %>%
+  mutate(small.cat = factor(small.cat, c("Politics & government", "Public spending",
+                                        "Abortion & sex", "Misc. policy"))) %>%
+  ggplot(aes(x = p, y = b1)) + 
+  geom_vline(xintercept = .5, linetype = 2, color = "gray") + 
+  geom_point(aes(fill = small.cat), shape = 21) + 
+  geom_text_repel(aes(label = var.name), size = 3) + 
+  theme_bw() + 
+  labs(x = "Phi estimate", y = "Beta estimate", fill = "", shape = "") + 
+  theme(axis.title=element_text(size=9)) +
+  facet_wrap(~small.cat) + 
+  theme(legend.position = "none")
+
+```
+
+
+There are several notable features of the figure. First, political party affiliation is a clear outlier in the plot, with much greater consistency and much greater active updating than other items. In contrast, questions asking about specific public spending priorities tend to have very low consistency, at least compared to other political items. Political views – including ideological identification (Named “Political views” in the figure) and general views of the role of government –  display higher consistency than specific policy questions but weak evidence of active updating. It is important to note that for political views, however, all evidence of active updating disappears by the time individuals reach 30, and individuals become more consistent in reporting their ideological identity as they age.
+
+While individuals tend to be inconsistent in their responses to spending priorities, views on some other specific policy questions with both high and low salience are reported quite consistently. Views on abortion, especially when considered as a scale, are quite consistently reported. As with all other scales, aggregating the composite items increases consistency but does not affect the amount of active updating. As discussed previously, views on gay marriage display high levels of active updating. In contrast, the item asking about support for legalizing recreational marijuana use is reported with consistency but weak active updating. This is notable, as public opinion and policies regarding both have shifted considerably in recent years, with many people assuming change in both is being driven by the same underlying process. Our findings suggest that, at least in recent years, many individuals have changed their views on gay marriage, but change in views on marijuana use have been driven primarily by cohort replacement. 
+
+# Discussion and Conclusions
+
+This study was motivated by a theoretical contrast in cultural sociology between the settled dispositions model (SDM), which emphasizes the power of the past, and the active updating model (AUM), which emphasizes contemporary meaning making. These two models of individual change are often implicit in analyses of belief change at the society level, but they are rarely examined empirically. We asked three general questions in light of this distinction and developed an empirical approach to adjudicating (albeit imperfectly) between these models. We now revisit our research questions to summarize what we have learned.
+
+First, _are patterns of cultural change generally better described by the active updating model or the settled dispositions model?_ In general terms, consistent with previous research (e.g., Vaisey and Lizardo 2016), we see a greater degree of evidence in support of the settled dispositions model. Around 40 percent of all items show no evidence for updating, and even those items that do show a relatively low degree of updating. Adult Americans are highly consistent in their attitudes from year to year, and those who change tend to bounce back to where they were. What that means in practice is that knowing what a person said two years ago provides almost no better prediction of their current views than knowing what they said four years ago. Unfortunately, because of measurement error, we cannot be sure exactly how much updating there is. But the average level of updating appears for most views appears to be low.
+
+Second, _is there evidence that younger respondents are doing more active updating than older respondents?_ For a limited subset of items, there seems to be evidence that younger respondents are updating their views whereas older respondents are not. This is consistent with a "cohortization" model that views young respondents as susceptible to updating shocks and older respondents as relatively insensitive to such shocks (see e.g., Bartels and Jackman 2014). Because the GSS begins with 18-year-olds, we may lack power to detect updating that occurs even earlier, so this may be an underestimate. This may be the case for the roughly 70 items that show no evidence of persistent change over time. Overall, however, there is significant heterogeneity in the relationship between age and attitude and behavior change.
+
+Third, _are there systematic differences in item content between questions that are better described by each model?_ With 184 items tapping very different kinds of opinions and demonstrating a range of active updating and consistency, there is no one overall pattern of attitude change in the population. We find patterns of responses that provide a range of support for diverse theories of attitude formation.  At the same time, our results are consistent with some general expectations about patterns in updating. Questions with public (or otherwise changing) referents and questions tapping high-salience topics over the study period (such as gay rights) showed the most evidence for active updating. Most items about gender, family, race, and institutions showed the least evidence for updating, suggesting most people's views on those topics are settled by the time they turn 18. The overall pattern of results, while diverse and at times hard to reconcile, does shed light on theoretical debates, to which we now turn.
+
+## Implications for Cultural Sociology
+
+What are the broader implications of these findings, both for theories of cultural change and for empirical work in this area? We see two major implications, one theoretical and one methodological.
+
+In the domain of cultural theory, our findings support the view that most cultural change happens slowly, through the mechanism of cohort succession. Most beliefs about gender roles, sexual morality, and abortion are, by and large, settled during adulthood. The settled nature of these beliefs is generally coupled with a high rate of consistency, suggesting that individuals truly hold these beliefs or at least have sufficient external support to consistently report these beliefs wave after wave. In contrast, a range of views about race were so inconsistent that it would be difficult to call them either settled or updating. Even for those items that did display strong evidence for active updating (e.g. "whites rich or poor" and "whites work hard") were still extremely hard to predict wave after wave. 
+
+In contrast to other beliefs, however, the pattern of findings for gay rights show that a high degree of public salience and social movements can accelerate change by encouraging some people to update their views who might not otherwise do so. By definition, salience is a limited resource, meaning only few beliefs and behaviors could change at this rate at a time. The baseline process of attitude change appears to be more consistent with a model that shows that people do not really change; rather, they die and are replaced by cohorts with different views. This general model is more consistent with a Bourdieusian theory that emphasizes the "conditions of past production" rather than processes of active meaning construction with little long-term memory.
+
+While the dominant pattern is stability during adulthood, the results suggest greater heterogeneity in the relationship between age and attitude change than what is emphasized in existing theories. The most prominent and well supported theories of attitude change suggest a peak of susceptibility to attitude change early in adulthood and either a rapid or gradual decline in attitude change with age [@alwinkrosnick; @visserkrosnick]. An additional view, the "life stages" hypothesis, suggests a similar pattern with a surge in attitude change late in life [@visserkrosnick]. While this age-related decline appears to be true for many political attitudes, which are the those items most frequently studied, the pattern is not nearly as consistent for other kinds of attitudes. Some items, such views on the Bible, suggest perpetual openness to attitude change as individuals age. Others, such as views on most abortion questions, suggest that early adult socialization is so strong that opinions are hardened by the time most people reach even 18 years old.
+
+For some beliefs, such as whether aging parents should live with their adult children and whether divorce laws are too lenient, persistent change actually becomes more common with age, a pattern that is not accounted for in any major hypothesis about the relationship between age and attitude change. Rather than supporting a single theory linking age to attitude change, our results call for more work linking attitude content to factors that encourage openness to change at different ages. Rather than assuming that "attitudes" in general are more or less likely to change at particular ages, we should explore the relationship between age and stability for a range of attitudes. Doing so will expand our understanding of the social and psychological factors that that give rise to stable or variable attitudes [@howekrosnick].
+
+Recent work that has attempted to provide social explanations for (mostly political) attitude stability in middle age is a strong start [@eatonetal; @vissermirabile]. However, this line of work should be cognizant of which attitudes stabilize in middle age and the relationship between social factors and these specific attitudes and explore how these factors link to attitudes that seem to change more frequently at these ages.
+
+## Implications for Political Sociology
+
+We said at the outset that these two models of individual culture underlie significant debates about public opinion formation, the formation of individual political beliefs over the life course, and the ability of individuals to hold and express clear opinions over time. What do our findings suggest for these debates?
+
+A major takeaway of our analysis is that ideological identity (identity as a liberal or conservative, and the extremity of this identification) was in all practical terms stable for individuals over 30. These respondents might express different positions from wave-to-wave, but in guessing what an individual will say in the future, we are better off guessing the mean of their previous responses than their most recent response. While our sample does not cover a large enough window of time or the life course to say for certain whether this represents a regular pattern (perhaps there is some period-specific reason that younger individuals changed while older individuals did not), the pattern is consistent with theories and previous findings that political dispositions become settled by age 30. With the exception of some low-profile government spending questions, most policy questions show greater evidence of active updating than this question of ideological identification, though the overall level of active updating is still quite limited. Partisan identification, in contrast, showed the highest degree of active updating of all political questions, as well as some of the highest consistency, and this updating was active across all age ranges.
+
+These results are consistent with theories that posit that, at least in the current era, individuals organize their beliefs around ideological identity [@boutylinevaisey; @converse], rather than some other organizing heuristic such as partisan identification, moral views, religion, or particular policy positions. It is also consistent with Baldassari and Gelman's [-@baldassarigelman] model of "partisans without constraint," which suggests that individuals hold a few strong beliefs and align their partisan identification with these, rather than adopting beliefs as a function of their partisan identification. Since there is no evidence of ideological change for the majority of the sample, and only very weak evidence of changes in specific policy positions, even high profile ones, the pattern of results is not consistent with the popular conception of political polarization in which individuals become more extreme in their views over time. This is notable given the time frame of our study, which covered the Obama administration, a time that is commonly assumed to observe a conservative shift for Republicans and a liberal shift for Democrats.
+
+The fact that there is not significant active updating for most political opinions should not be taken to imply that individuals are consistent in their positions. Outside of a handful of high-profile political items such as partisan identity, abortion, and gay marriage, individuals appear to lack strong, clear opinions on specific policy questions. This is clearest when it comes to questions that deal with spending priorities. Prior responses to questions about government spending on foreign aid, science, drugs, child care, crime prevention, mass transit, national parks, and the problems of cities are bad predictors of what individuals will say later on. 
+
+That being said, individuals are not wholly without consistent opinions. On items such spending on space and welfare, divorce laws, and the death penalty, individuals' responses are consistent from one wave to the next. While some of these items, particularly those pertaining to gay marriage and public spending on welfare, received significant media attention during the period covered by the panel, and thus are consistent with Zaller's [@zaller] model of attitude formation, space exploration was not a high-profile issue in this time period, and we struggle to account for why this item exhibits a comparatively high $\beta$ estimate. 
+
+The overall picture that emerges from evaluating the active updating and stability of political items in the GSS is one in which the majority of respondents hold a general political identity and a few clear views on issues like abortion, generally attempt to align their identification to their views, and respond to elite opinion change when it provides clear signals. It is not a picture of a rapidly polarizing society or one wholly ignorant of public debates. Individuals tend to have more-or-less settled views, especially on core questions such as ideology, and report (with a high degree of inconsistency) more specific policy positions based on these.
+
+## Methodological Implications
+
+Methodologically, our results highlight the challenges of evaluating population-wide attitude change using short-term panel studies. The evidence strongly suggests that most of what might be interpreted as "change" in the GSS panels is some combination of measurement error or non-persistent change. It does not matter whether measurement error or short-term change is the predominant driver behind this pattern; what matters is that change is too rare in a sample of adults to measure accurately on the vast majority of items. This strongly argues against using two-wave panels to measure attitude change, which do not allow researchers to separate persisting from non-persisting changes. 
+
+The fact that persistent change is practically nonexistent for many items bolsters the case for using repeated survey responses to measure the reliability of survey items [@alwin; @houthastings], since it is often a valid assumption that the underlying view is unchanging. At the same time, our results call for greater focus on methodological tools that can separate short-term attitude change from measurement error. While we generally assume that lasting changes in attitudes are more likely to influence behavior, this is not necessarily true. Short-term attitude changes might be meaningful in shaping short-term behaviors, but identifying this kind of change is difficult. Even for items related to abortion, where there is almost no evidence of persistent change and the overall picture is one of stability of belief, individuals do bounce around from year-to-year. 
+
+Because many attitudes, including views on abortion, race, gender roles, social trust, and institutional confidence, have mostly stabilized by the time individuals enter the GSS, our results also call for greater emphasis on surveying the attitudes of younger individuals to understand how these attitudes are formed. Panel studies tracing the political socialization of adolescents are rare but could be highly fruitful. In a similar vein, it does not seem worthwhile to ask certain GSS questions repeatedly. Questions about racial stereotypes, which show almost no consistency from wave to wave but have been asked every wave since 1996, strike as as particularly useless. Those that are repeated should be specifically targeted to topics that are believed to be changing broadly (e.g., politics, gay rights). Understanding the social origins of individuals' attitudes requires greater focus on the "conditions of past production" that give rise to persistent beliefs in adulthood.
+
+
+
+
+
+
+
+\pagebreak
+
+# Appendix A: $\phi$ values for all variables
+
+Figures \ref{fig:phi_relig} through \ref{fig:phi_racgen} plot $\phi$ estimates for all items included in the analysis, grouped by subject material.
+
+```{r loadfiguredata}
+load(here("data", "figure_data.Rdata"))
+```
+
+```{r religphi, message=FALSE, fig.width=6.8, fig.height=8.5, fig.cap="Phi estimates for items about religious activity and beliefs, social life, subjective SES, and suicide."}
+clean.pestimates %>%
+  filter(grepl("_c", var)==FALSE) %>%
+  filter(small.cat %in% c("Relig. Activity", "Relig. identity & beliefs",
+                          "Social life", "Subjective SES", "Suicide")) %>%
+  ggplot(aes(x = reorder(var.name, estimate), y = estimate, color = as.factor(stable))) + 
+  geom_hline(yintercept = .5, linetype = 2, color = "gray") + 
+  geom_pointrange(aes(ymin = ci.lower, ymax = ci.upper)) + 
+  geom_point() + 
+  coord_flip() + 
+  theme_minimal() + 
+  facet_grid(small.cat ~ ., scales = "free_y", space = "free", switch = "both") + 
+  scale_color_manual(values = c("black", "darkgray")) + 
+  theme(
+    strip.background = element_blank(),
+    strip.text.x = element_blank(),
+    strip.placement = "outside",
+    legend.position = "none",
+    legend.title = element_blank(),
+    axis.text=element_text(size=7),
+    legend.text=element_text(size=7)
+  )  +
+  expand_limits(y = .9) +
+  labs(x = "", y = "Phi estimate")
+
+```
+
+
+\begin{figure}[!ht]
+\includegraphics{figures/relig_phi_estimates.pdf}
+\centering
+\caption{$\phi$ estimates for items about religious activity and beliefs, social life, subjective SES, and suicide.}
+\label{fig:phi_relig}
+\end{figure}
+
+```{r poliphi, message=FALSE, fig.width=6.8, fig.height=8.5, fig.cap="Phi estimates for items about guns, law, crime and policing; politics and government; and public spending."}
+
+clean.pestimates %>%
+  filter(grepl("_c", var)==FALSE) %>%
+  filter(small.cat %in% c("Guns, laws, crime & police", "Politics & government",
+                          "Public spending")) %>%
+  filter(var != "polhitok") %>%
+  ggplot(aes(x = reorder(var.name, estimate), y = estimate, color = as.factor(stable))) + 
+  geom_hline(yintercept = .5, linetype = 2, color = "gray") + 
+  geom_pointrange(aes(ymin = ci.lower, ymax = ci.upper)) + 
+  geom_point() + 
+  coord_flip() + 
+  theme_minimal() + 
+  facet_grid(small.cat ~ ., scales = "free_y", space = "free", switch = "both") + 
+  scale_color_manual(values = c("black", "darkgray")) + 
+  theme(
+    strip.background = element_blank(),
+    strip.text.x = element_blank(),
+    strip.placement = "outside",
+    legend.position = "none",
+    legend.title = element_blank(),
+    axis.text=element_text(size=7),
+    legend.text=element_text(size=7)
+  )  +
+  expand_limits(y = .9) +
+  labs(x = "", y = "Phi estimate")
+
+```
+
+
+\begin{figure}[!ht]
+\includegraphics{figures/poli_phi_estimates.pdf}
+\centering
+\caption{$\phi$ estimates for items about guns, law, crime and policing; politics and government; and public spending.}
+\label{fig:phi_poli}
+\end{figure}
+
+```{r civlibphi, message=FALSE, fig.width=6.8, fig.height=8.5, fig.cap="Phi estimates for items about civil liberties, confidence in leadership, health, morale, and social trust."}
+clean.pestimates %>%
+  filter(grepl("_c", var)==FALSE) %>%
+  filter(small.cat %in% c("Civil liberties", "Trust", "Confidence in leadership",
+                          "Health & morale")) %>%
+  ggplot(aes(x = reorder(var.name, estimate), y = estimate, color = as.factor(stable))) + 
+  geom_hline(yintercept = .5, linetype = 2, color = "gray") + 
+  geom_pointrange(aes(ymin = ci.lower, ymax = ci.upper)) + 
+  geom_point() + 
+  coord_flip() + 
+  theme_minimal() + 
+  facet_grid(small.cat ~ ., scales = "free_y", space = "free", switch = "both") + 
+  scale_color_manual(values = c("black", "darkgray")) + 
+  theme(
+    strip.background = element_blank(),
+    strip.text.x = element_blank(),
+    strip.placement = "outside",
+    legend.position = "none",
+    legend.title = element_blank(),
+    axis.text=element_text(size=7),
+    legend.text=element_text(size=7)
+  )  +
+  expand_limits(y = .9) +
+  labs(x = "", y = "Phi estimate")
+```
+
+
+\begin{figure}[!ht]
+\includegraphics{figures/civlib_phi_estimates.pdf}
+\centering
+\caption{$\phi$ estimates for items about civil liberties, confidence in leadership, health, morale, and social trust.}
+\label{fig:phi_civlib}
+\end{figure}
+
+```{r racgenphi, message=FALSE, fig.width=6.8, fig.height=8.5, fig.cap="Phi estimates for items about race, gender, sex, sexuality, and abortion."}
+clean.pestimates %>%
+  filter(grepl("_c", var)==FALSE) %>%
+  filter(small.cat %in% c("Gender & family", "Race & immigration", "Sex, sexuality & abortion")) %>%
+  ggplot(aes(x = reorder(var.name, estimate), y = estimate, color = as.factor(stable))) + 
+  geom_hline(yintercept = .5, linetype = 2, color = "gray") + 
+  geom_pointrange(aes(ymin = ci.lower, ymax = ci.upper)) + 
+  geom_point() + 
+  coord_flip() + 
+  theme_minimal() + 
+  facet_grid(small.cat ~ ., scales = "free_y", space = "free", switch = "both") + 
+  scale_color_manual(values = c("black", "darkgray")) + 
+  theme(
+    strip.background = element_blank(),
+    strip.text.x = element_blank(),
+    strip.placement = "outside",
+    legend.position = "none",
+    legend.title = element_blank(),
+    axis.text=element_text(size=7),
+    legend.text=element_text(size=7)
+  )  +
+  expand_limits(y = .9) +
+  labs(x = "", y = "Phi estimate")
+
+```
+
+
+\begin{figure}[!ht]
+\includegraphics{figures/racgen_phi_estimates.pdf}
+\centering
+\caption{$\phi$ estimates for items about race, gender, sex, sexuality, and abortion.}
+\label{fig:phi_racgen}
+\end{figure}
+
+
+# Appendix B: Coarsened variable estimates
+
+```{r loadcoarse}
+load(here("data", "coarse_vars.Rdata"))
+
+```
+
+
+$\phi$ estimates for coarsened items are presented in Figures \ref{fig:coarse_relig} through \ref{fig:coarse_racgen}. If scales had symmetrical scales with no clear midpoint (e.g., strongly agree/agree/disagree/strongly disagree), we coarsened those scales to two points (agree/disagree). If scales included a clear midpoint, we included that and coarsened responses on either side. For items on large scales such as hours of TV watched, we split responses into greater than the median or less than or equal to the median. If changes between ends of each scale are more persistent than changes within ends of these scales, then $\phi$ estimates of coarsened item should be higher than estimates for items with more response options. 
+
+```{r coarserelig, message=FALSE, fig.width=6.8, fig.height=8.5, fig.cap="Phi estimates for coarsened questions about religion, subjective socioeconomic status, and morale." }
+coarse_vars %>%
+  filter(small.cat %in% c("Relig. Activity", "Relig. identity & beliefs",
+                          "Social life", "Subjective SES", "Suicide",
+                          "Health & morale")) %>%
+  ggplot(aes(x = fct_rev(var.name), y = estimate, color = as.factor(stable))) + 
+  geom_hline(yintercept = .5, linetype = 2, color = "gray") + 
+  geom_pointrange(aes(ymin = ci.lower, ymax = ci.upper)) + 
+  geom_point() + 
+  coord_flip() + 
+  theme_minimal() + 
+  facet_grid(base_var ~ ., scales = "free_y", space = "free", switch = "both") + 
+  scale_color_manual(values = c("black", "darkgray")) + 
+  theme(
+    strip.background = element_blank(),
+    strip.text.x = element_blank(),
+    strip.text.y = element_blank(),
+    strip.placement = "outside",
+    legend.position = "none",
+    legend.title = element_blank(),
+    axis.text=element_text(size=7),
+    legend.text=element_text(size=7)
+  )  +
+  expand_limits(y = .9) +
+  labs(x = "", y = "Phi estimate")
+
+```
+
+
+\begin{figure}[t]
+\includegraphics{figures/coarse_relig.pdf}
+\centering
+\caption{$\phi$ estimates for coarsened questions about religion, subjective socioeconomic status, and morale.}
+\label{fig:coarse_relig}
+\end{figure}
+
+```{r coarsepoli, message=FALSE, fig.width=6.8, fig.height=8.5, fig.cap="Phi estimates for coarsened questions about politics, government, sex and sexuality."}
+coarse_vars %>%
+  filter(small.cat %in% c("Guns, laws, crime & police", "Politics & government",
+                          "Public spending", "Sex, sexuality & abortion")) %>%
+  ggplot(aes(x = fct_rev(var.name), y = estimate, color = as.factor(stable))) + 
+  geom_hline(yintercept = .5, linetype = 2, color = "gray") + 
+  geom_pointrange(aes(ymin = ci.lower, ymax = ci.upper)) + 
+  geom_point() + 
+  coord_flip() + 
+  theme_minimal() + 
+  facet_grid(base_var ~ ., scales = "free_y", space = "free", switch = "both") + 
+  scale_color_manual(values = c("black", "darkgray")) + 
+  theme(
+    strip.background = element_blank(),
+    strip.text.x = element_blank(),
+    strip.text.y = element_blank(),
+    strip.placement = "outside",
+    legend.position = "none",
+    legend.title = element_blank(),
+    axis.text=element_text(size=7),
+    legend.text=element_text(size=7)
+  )  +
+  expand_limits(y = .9) +
+  labs(x = "", y = "Phi estimate")
+```
+
+
+\begin{figure}[t]
+\includegraphics{figures/coarse_poli.pdf}
+\centering
+\caption{$\phi$ estimates for coarsened questions about politics, government, sex and sexuality.}
+\label{fig:coarse_poli}
+\end{figure}
+
+```{r coarseracgen, message=FALSE, fig.width=6.8, fig.height=8.5, fig.cap="Phi estimates for coarsened questions about race and gender."}
+coarse_vars %>%
+  filter(small.cat %in% c("Gender & family", "Race & immigration")) %>%
+  ggplot(aes(x = fct_rev(var.name), y = estimate, color = as.factor(stable))) + 
+  geom_hline(yintercept = .5, linetype = 2, color = "gray") + 
+  geom_pointrange(aes(ymin = ci.lower, ymax = ci.upper)) + 
+  geom_point() + 
+  coord_flip() + 
+  theme_minimal() + 
+  facet_grid(base_var ~ ., scales = "free_y", space = "free", switch = "both") + 
+  scale_color_manual(values = c("black", "darkgray")) + 
+  theme(
+    strip.background = element_blank(),
+    strip.text.x = element_blank(),
+    strip.text.y = element_blank(),
+    strip.placement = "outside",
+    legend.position = "none",
+    legend.title = element_blank(),
+    axis.text=element_text(size=7),
+    legend.text=element_text(size=7)
+  )  +
+  expand_limits(y = .9) +
+  labs(x = "", y = "Phi estimate")
+```
+
+
+\begin{figure}[t]
+\includegraphics{figures/coarse_racgen.pdf}
+\centering
+\caption{$\phi$ estimates for coarsened questions about race and gender.}
+\label{fig:coarse_racgen}
+\end{figure}
+
+Generally speaking, most items with no evidence of active updating continue to have no evidence of active updating when coarsened. For items that showed evidence for active updating, the coarsened estimates tended to be very similar to the uncoarsened estimates, suggesting that persisting and non-persisting changes happen about as often between ends of these scales as they do within ends of these scales.
+
+There are a couple notable departures from this general pattern. Several political questions -- general political views, views on whether the government should reduce inequality, and views on whether the government should help blacks -- show decreased evidence of persisting change when coarsened. This suggests that changes around the midpoint of the scale tend to be measurement error, a finding that is consistent with previous work suggesting that individuals without settled political views tend to choose points around the middle of the response scale [@converse].
+
+\pagebreak
+
+# References
+
