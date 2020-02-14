@@ -35,7 +35,7 @@ Culture is an important part of social life but cultures are continuously evolvi
 
 Attempts to account for opinion changes in society have produced conflicting theories about the process of opinion formation and the ability of individuals to maintain consistent attitudes. Some models suggest that people lack the cognitive tools to maintain consistent beliefs on social and political issues. As a result, they construct responses on the fly in the interview setting, drawing on ideas from opinion leaders and changing their attitudes as elite discourse changes [@zaller; @converse; @perrinmcfadden]. By contrast, cohort replacement theories posit that people do hold opinions and are unwilling to alter them in the face of societal change, and thus public opinion changes only with generational turnover [@mannheim; @ryder]. Another set of models claim that people hold "a number of real, stable, and sensible opinions about public policy" and change their opinions in response to new information [@pageshapiro: p. xi; @achen1992]. More recently, sociologists have suggested that people attempt to align malleable peripheral beliefs with relatively fixed "core" beliefs using social cues [@boutylinevaisey; @lakoff; @goldbergstein]. 
 
-Despite their diversity, models of aggregate attitude and behavior change often implicitly invoke one of two broad models of individual change with strong connections to theories in cultural sociology. The first of these models is an _active updating_ model that emphasizes the role of changing discourses, environments, and interactions on attitude formation. This model is rooted in a broadly pragmatist approach to action, which claims that contemporary social environments and problems provoke people to adapt their views and make new meaning (e.g., Joas 1996, Gross 2009, Swidler 2001). The second is a _settled dispositions_ model, which emphasizes the continuing influence of durable dispositions acquired early in life. This model has affinities with the Bourdieusian tradition, which de-emphasizes (though does not ignore) the current environment in favor of the "past conditions of production" (e.g., Bourdieu 1990, Vaisey and Lizardo 2016). These two models represent different approaches to understanding how people come to hold diverse forms of _personal culture_, or the declarative and non-delcarative attitudes, worldviews, values, dispositions, and associations that manifest at the individual level [@lizardo17].
+Despite their diversity, models of aggregate attitude and behavior change often implicitly invoke one of two broad models of individual change with strong connections to theories in cultural sociology. The first of these models is an _active updating_ model that emphasizes the role of changing discourses, environments, and interactions on attitude formation. This model is rooted in a broadly pragmatist approach to action, which claims that contemporary social environments and problems provoke people to adapt their views and make new meaning (e.g., Joas 1996, Gross 2009, Swidler 2001). The second is a _settled dispositions_ model, which emphasizes the continuing influence of durable dispositions acquired early in life. This model has affinities with the Bourdieusian tradition, which de-emphasizes (though does not ignore) the current environment in favor of the "past conditions of production" (e.g., Bourdieu 1990, Vaisey and Lizardo 2016). These two models represent different approaches to understanding how people come to hold diverse forms of _personal culture_, or the declarative and non-declarative attitudes, worldviews, values, dispositions, and associations that manifest at the individual level [@lizardo17].
 
 In this paper, we make these two models of personal culture change explicit, deduce some of their empirical implications, and derive a statistical model for estimating the prevalence of active updating using panel data. In contrast to previous models that tend to assume one of these data-generating processes to measure stability and reliability of estimates over time, our approach separates persisting change from non-persisting change to estimate if there is evidence of individuals in the population making persistent changes in attitudes and behaviors. We then apply this method to 183 items from the 2006-2014 General Social Surveys (GSS). By classifying the pattern of change in personal culture, we can clarify when different accounts of aggregate change are more likely to apply. Because of data limitations, we cannot speak to all types of cultural objects (e.g., music styles, baby names). We do, however, investigate a wide variety of opinions, including views on politics, free speech, race, and gender roles, and practices including socializing at bars or attending church, that are important in contemporary U.S. society.
 
@@ -63,49 +63,11 @@ How does the respondent formulate a response to that question each time, year af
 
 These models may seem similar at first glance, but they have different implications for the pattern of individuals' responses we would observe over time. Equation \@ref(eq:AR) represents an _active updating_ model and Equation \@ref(eq:FE) represents a _settled dispositions_ model, as we explain below. Figure \@ref(fig:dag) shows these models in graphical form, which helps highlight their differences. In the next two sections, we consider each of these models and briefly discuss their connections to sociological theories.
 
-```{r dag, message=FALSE, fig.width=6.8, fig.cap="Graphical representation of active updating and settled dispositions models over time."}
+[Figure \@ref(fig:dag) about here]
+
+```{r}
 library(ggdag)
 library(dagitty)
-aum <- 
-  dagitty("dag {
-        y1 -> y2 -> y3 ;
-        v1 -> y1 ;
-        v2 -> y2 ;
-        v3 -> y3 
-        }")
-coordinates( aum ) <-
-  list( x=c(y1 = 1, y2 = 2, y3 = 3, v1 = 1, v2 = 2, v3 = 3),
-        y=c(y1 = 2, y2 = 2, y3 = 2, v1 = 1, v2 = 1, v3 = 1) )
-
-aum_dag <- aum %>% tidy_dagitty() %>% ggdag() + 
-  theme_dag_blank() + 
-  labs(title = "Active Updating Model") +
-  scale_y_continuous(limits = c(.8,3.2)) +
-  theme(plot.title = element_text(hjust = 0.5)) +
-  theme(plot.margin = unit(c(1,1,.2,.2), "cm"))
-
-
-sdm <- 
-  dagitty("dag {
-        U -> {y1 y2 y3} ;
-        v1 -> y1 ;
-        v2 -> y2 ;
-        v3 -> y3 
-        }")
-coordinates( sdm ) <-
-  list( x=c(y1 = 1, y2 = 2, y3 = 3, v1 = 1, v2 = 2, v3 = 3, U = 2),
-        y=c(y1 = 2, y2 = 2, y3 = 2, v1 = 1, v2 = 1, v3 = 1, U = 3) )
-
-sdm_dag <- sdm %>% tidy_dagitty() %>% ggdag() + 
-  theme_dag_blank() + 
-  labs(title = "Settled Dispositions Model") +
-  scale_y_continuous(limits = c(.8,3.2)) +
-  theme(plot.title = element_text(hjust = 0.5)) +
-  theme(plot.margin = unit(c(1,.2,.2,1), "cm"))
-
-
-gridExtra::grid.arrange(aum_dag, sdm_dag, ncol = 2)
-
 ```
 
 
@@ -155,7 +117,7 @@ _Core-periphery models:_ A number of theories of attitude development posit that
 
 The picture that emerges from these previous works is that ideological identity should be a core, if poorly reported, disposition. Changes in ideological identity should be non-persisting, occurring because people either do not fully understand these terms and report their views with error [@converse] or because people bounce around a stable mean, meaning this item should show low updating and medium to low consistency. On the other hand, we should see evidence that individuals adjust their partisan identification to match their ideological identification as they come to find that one party better represents their core positions [@baldassarigelman]. In other words, liberal Republicans should become liberal Democrats, not conservative Republicans. This means that partisan identification should display high levels of updating. Again, this does not mean that many people change, only that changes tend to persist.
 
-Alongside ideological identificaton, moral issues and general political sentiments might serve as core organizing principles, but what these beliefs are will not be consistent across people [@baldassarigelman]. For example, some people might hold strong, consistent views on abortion while others care about the amount of government intervention in the economy. Because of this heterogeneity, these beliefs should have a moderate level of consistency, since those people who do not value them should report them inconsistently. There should be no evidence of updating in these beliefs, as previous work suggests that people do not bring these attitudes in line with other beliefs, even if they are discordant. 
+Alongside ideological identification, moral issues and general political sentiments might serve as core organizing principles, but what these beliefs are will not be consistent across people [@baldassarigelman]. For example, some people might hold strong, consistent views on abortion while others care about the amount of government intervention in the economy. Because of this heterogeneity, these beliefs should have a moderate level of consistency, since those people who do not value them should report them inconsistently. There should be no evidence of updating in these beliefs, as previous work suggests that people do not bring these attitudes in line with other beliefs, even if they are discordant. 
 
 Peripheral beliefs that "grow" out of core beliefs, such as preferences for government spending on various priorities and specific policy positions, should show some evidence of updating, as individuals attempt to align these with their core beliefs. However, because of the cognitive effort required to map peripheral beliefs onto core beliefs, we generally expect the former to be inconsistently reported [@zaller; @converse]. However, there are conditions that might decrease that cognitive effort and therefore increase the amount of updating and consistency with which peripheral issues are reported, to which we now turn. 
 
@@ -253,7 +215,9 @@ Despite these limitations, the model is capable of detecting the presence of per
 
 ## Analysis Steps
 
-Our analysis proceeds in three steps to answer our three research questions. First, we evaluate the overall evidence in support of the active updating model. To do this, we compare for each item the Bayesian Information Criteria (BIC) of a model estimated using Equation \@ref(eq:MODEL) with a free estimate of $\phi$ to a model that constrains $\phi= .5$. We calculate the posterior probability that the model with the free parameter fits the data better. If the model with the constraint is preferred, then we conclude that both wave 1 and wave 2 are equally good predictors of wave 3, meaning there is no evidence that respondents are actively updating on that item.
+Our analysis proceeds in three steps to answer our three research questions. First, we evaluate the overall evidence in support of the active updating model. To do this, we compare for each item the Bayesian Information Criteria (BIC) of a model estimated using Equation \@ref(eq:MODEL) with a free estimate of $\phi$ to a model that constrains $\phi= .5$. We calculate the posterior probability that the model with the free parameter fits the data better. If the model with the constraint is preferred, then we conclude that both wave 1 and wave 2 are equally good predictors of wave 3, meaning there is no evidence that respondents are actively updating on that item.[^link]
+
+[^link]: All data used in this analysis is publicly available through the General Social Survey at the National Opinion Research Center at http://gss.norc.org/. R code for how we cleaned the GSS panels, all analyses performed in this paper, and all figures created in this paper can be found at http://github.com/krkiley/panel_change.
 
 Second, for variables that show at least some evidence of active updating ($\phi > 0.5$), we ask whether the persistent change is concentrated among younger respondents. To test this, we re-estimate our original model and allow $\phi$ to have different values above and below a given age cutoff. Rather than test a single age cutoff, we again use BIC comparisons to evaluate whether including the dummy variable improves the model fit using a cutoff of every age between 20 and 45. We test a range of cutoffs to ensure robustness of the overall pattern to specific ages.
 
@@ -297,22 +261,7 @@ To evaluate the evidence in favor of the active updating model, we compare for a
 
 Figure \@ref(fig:phihist) plots the distribution of $\phi$ estimates for the 183 items evaluated in this analysis and the posterior probabilities that the model without the constraint fits the data better, generated by comparing the BIC from models with and without the constraint.
 
-```{r phihist, message=FALSE, fig.width=6.8, fig.cap="Distribution of phi estimates and probabilities that items show evidence of active updating."}
-
-res.df %>%
-  filter(grepl("_c", var)==FALSE) %>%
-  select(var, p, prob_aum) %>%
-  gather(key = "key", value = "value", -var) %>%
-  mutate(key = recode(key, "p"="Phi estimates (Updating)", "prob_aum"="Probability of some active updating")) %>%
-  ggplot(aes(x = value, y=..count../sum(..count..))) +
-  geom_histogram(fill = "gray", color = "black", bins = 15) + 
-  geom_vline(xintercept = .5, color = "black", linetype = 2) + 
-  theme_classic() + 
-  facet_wrap(~key, scales = "free_x") +
-  expand_limits(x = 1) +
-  labs(x = "", y = "Proportion of items") + 
-  theme(axis.title=element_text(size=9))
-```
+[Figure \@ref(fig:phihist) about here.]
 
 On the left side of the figure, we see that the majority of $\phi$ estimates fall between .5 and .6, meaning that wave 2 is only a slightly better predictor than wave 1 for most items. This suggests that if active updating is happening in these responses, it is relatively infrequent or small compared to temporary change and measurement error. 
 
@@ -330,29 +279,7 @@ Our second research question asks whether there is evidence that younger respond
 
 Of the 108 items that showed any evidence for active updating in the last section, 22 showed differential effects of age for more than 50 percent of cutoff ages we tested, meaning the majority did not. Figure \@ref(fig:agegroupcomparison) plots the estimates of these 22 items for individuals above 30 and individuals equal to or below 30 to get a sense of the magnitude of difference between older and younger individuals on these items.
 
-```{r agegroupcomparison, message=FALSE, fig.width=6.8, fig.height=8, fig.cap="Comparison of phi estimates for individuals over and equal to or less than 30 years old, with 95 percent confidence intervals."}
-
-load(here("data", "age_results.Rdata"))
-
-
-bind_rows(age.results) %>%
-  mutate(ci.lower = estimate - 1.96 * std.error,
-         ci.upper = estimate + 1.96 * std.error) %>%
-  left_join(attitude_vars) %>%
-  mutate(age = recode(age, "old"="Over 30", "young"="30 & under")) %>%
-  ggplot(aes(x = reorder(var.name, estimate), y = estimate, color = age)) + 
-  geom_hline(yintercept = .5, color = "black", linetype = 2) + 
-  geom_pointrange(aes(ymin = ci.lower, ymax = ci.upper)) + 
-  coord_flip() + 
-  theme_minimal() + 
-  scale_color_manual(values = c("black", "gray")) + 
-  labs(x = "", y = "Phi estimate (Updating)", color = "") +
-  theme(axis.text=element_text(size=7),
-        axis.title=element_text(size=9),
-        legend.position = "bottom")
-
-```
-
+[Figure \@ref(fig:agegroupcomparison) about here.]
 
 The majority of items that show evidence for age concentration show that active updating is more prevalent among younger respondents than older respondents. These items include views on affirmative action, women in the workforce, and politics; several civil liberties items; general views of whether people can be trusted; and views on whether doctors should let terminal patients die. These items tend to be in subject areas where a large proportion showed no evidence of active updating, which suggests an overall trend of these views being formed earlier in life (i.e., prior to becoming eligible for the GSS at 18) and remaining relatively stable over time.
 
@@ -368,53 +295,14 @@ While 40 percent of items show no evidence of active updating, and those that do
 
 Figure \@ref(fig:phibetascatter) plots the $\phi$ and $\beta$ estimates for items shaded by whether they preferred the $\phi = .5$ constraint or not and label a few items that stand out. Items tend to prefer the $\phi=0.5$ constraint for a combination of two reasons: because wave 1 and wave 2 have equal predictive power ($\phi$ is close to .5) or because the measure is so unpredictable ($\beta$ is low) that neither wave 1 nor wave 2 has much predictive power, making any observed active updating close to meaningless. 
 
-```{r phibetascatter, message=FALSE, fig.width=6.8, fig.height = 6.0, fig.cap="Distribution of beta and phi estimates for GSS items, by whether model prefers phi = .5 constraint."}
-res.df %>%
-  filter(grepl("_c", var)==FALSE) %>%
-  mutate(aum = ifelse(var %in% aum_vars, "\nPersistent\nChange\n", "\nNo Persistent\nChange\n")) %>%
-  ggplot(aes(x = p, y = b1)) + 
-  geom_point(aes(fill = aum, shape = aum)) + 
-  scale_shape_manual(values = c(21, 22)) + 
-  scale_fill_manual(values = c("gray", "black")) + 
-  geom_text_repel(data = label_vars, aes(label = var.name), size = 3) + 
-  theme_minimal() +
-  labs(x = "Phi estimate (Updating)", y = "Beta estimate (Consistency)", fill = "", shape = "") + 
-  theme(axis.title=element_text(size=9))
-```
-
+[Figure \@ref(fig:phibetascatter) about here.]
 
 Items showing evidence of active updating tend to have $\phi$ estimates greater than .55, and most have $\beta$ estimates greater than .6. A small group of variables, including confidence in the leadership of the executive branch of the federal government have low $\beta$ estimates, meaning that prediction at wave 3 is difficult, but have large $\phi$ estimates, meaning that wave 2 is still a better predictor than wave 1. 
 
 Which items show the strongest evidence for active updating? There is no way we can discuss all 183 items in detail without the discussion becoming tedious. Although we include $\phi$ estimates for all items in Appendix A, Figure \@ref(fig:summary) summarizes the distributions of $\phi$ by the content of the question. We constrain items that showed no evidence of active updating to $\phi = .5$. In addition to showing the median and interquartile range of each distribution, the figure also highlights the item in each group that shows the greatest degree of evidence for active updating. 
 
-```{r summary, message=FALSE, fig.width=6.8, fig.height=9.0, fig.cap="Summary of phi estimates for all items, by topical group. Numbers in parentheses indicate the number of items in each topical group."}
-load(here("data", "summary_plot_data.Rdata"))
+[Figure \@ref(fig:summary) about here.]
 
-cat_counts <- attitude_vars %>% group_by(small.cat) %>% summarise(n = n())
-
-plot.data %>%
-  left_join(cat_counts) %>%
-  mutate(small.cat = paste(small.cat, " (", n, ")", sep = "")) %>%
-  ggplot(aes(x = reorder(small.cat, median))) + 
-  geom_pointrange(aes(y = median, ymin = q25, ymax = q75)) + 
-  geom_point(aes(y = min), shape = 21) + 
-  geom_point(aes(y = max),shape = 21) + 
-  geom_text(aes(y = max, label = var.name), size = 2, position = position_nudge(y = .07)) + 
-  coord_flip() + 
-  theme_minimal() + 
-  theme(
-    strip.background = element_blank(),
-    strip.text.x = element_blank(),
-    strip.placement = "outside",
-    legend.position = "none",
-    legend.title = element_blank(),
-    axis.text=element_text(size=9),
-    legend.text=element_text(size=9)
-    )  +
-  expand_limits(y = .9) +
-  labs(x = "", y = "Phi estimate (Updating)")
-
-```
 
 There is a lot to process, even in this summary figure. The main takeaway is that, even for items that show some evidence for active updating, the values of $\phi$ are still quite low. Only two groups of items have median $\phi$ values above $0.6$: public spending and religious activity. In general, then, it is accurate to say that most of the "change" measured by the GSS is not persistent but some combination of measurement error and short-term fluctuations.[^error]
 
@@ -438,39 +326,11 @@ A few items lack external mechanisms, represent forms of private culture, and di
 
 Because theories of public opinion formation and the development of political beliefs form the bulk of the theoretical tension that frames this analysis, and because many of these beliefs display evidence of active updating, we examine these beliefs in greater detail than other items. Figure \@ref(fig:polvariables) plots the $\phi$ and $\beta$ estimates for questions about political identity, the role of government, and specific policies. We break these items up into categories and remove a few items for ease of viewing.
 
-```{r polvariables, message=FALSE, fig.width=7, fig.height=8, fig.cap="Phi (updating) and beta (consistency) estimates for 43 political attitudes and identities."}
-left_join(res.df, attitude_vars) %>%
-  filter(small.cat %in% c("Politics & government", "Public spending",
-                          "Sex, sexuality & abortion") |
-           var %in% c("cappun", "divlaw", "gunlaw", "grass", "courts",
-                      "letin1a")) %>%
-  mutate(small.cat = ifelse(small.cat %in% c("Race & immigration", 
-                                             "Guns, laws, crime & police") | 
-                              var %in% c("prayer", "uswary"), 
-         "Misc. policy" , small.cat)) %>%
-  filter(var %!in% c("abscale6", "absingle", "teensex", "xmarsex",
-                     "homosex", "premarsx")) %>%
-  mutate(var.name = gsub("Government", "Gov't", var.name),
-         var.name = gsub("Abortion", "Abort", var.name),
-         small.cat = ifelse(small.cat == "Sex, sexuality & abortion",
-                            "Abortion & sex", small.cat)) %>%
-  mutate(small.cat = factor(small.cat, c("Politics & government", "Public spending",
-                                        "Abortion & sex", "Misc. policy"))) %>%
-  ggplot(aes(x = p, y = b1)) + 
-  geom_vline(xintercept = .5, linetype = 2, color = "gray") + 
-  geom_point(aes(fill = small.cat), shape = 21) + 
-  geom_text_repel(aes(label = var.name), size = 3) + 
-  theme_bw() + 
-  labs(x = "Phi estimate (Updating)", y = "Beta estimate (Consistency)", fill = "", shape = "") + 
-  theme(axis.title=element_text(size=9)) +
-  facet_wrap(~small.cat) + 
-  theme(legend.position = "none")
-
-```
+[Figure \@ref(fig:polvariables) about here.]
 
 There are several notable features of the figure. First, political party affiliation is a clear outlier, with greater consistency and greater active updating than other items. In contrast, questions asking about specific public spending priorities tend to have low consistency compared to other items. Political views – including ideological identification (Named “Political views” in the figure) and general views of the role of government ("Gov't do more or less", "Gov't reduce inequality") – display higher consistency than specific policy questions but weak evidence of active updating. It is important to restate that for political views, all evidence of active updating disappears by the time individuals reach 30, and individuals become more consistent in reporting their ideological identity as they age.
 
-While people tend to be inconsistent in their responses to spending priorities, views on other policy questions with both high and low salience are reported quite consistently. Views on abortion, especially when considered as a scale, are consistently reported. As with all other scales, aggregating the composite items increases consistency but does not affect the estimate of the amount of active updating, validating our method's ability to separate persisting and non-persisting change. As discussed previously, views on gay marriage display high levels of active updating. In contrast, the item asking about support for legalizing recreational marijuana use is reported with consistency but weak active updating. This is notable, as public opinion and policies regarding both have shifted considerably in recent years. Previous work suggests that change in both could be driven by the same underlying process [@schnabelsevell]. Our findings suggest that, at least in recent years, many individuals have changed their views on gay marriage, but changing views on marijuana have been driven primarily by cohort replacement. 
+While people tend to be inconsistent in their responses to spending priorities, views on other policy questions with both high and low salience are reported quite consistently. Views on abortion, especially when considered as a scale, are consistently reported. As with all other scales, aggregating the composite items increases consistency but does not affect the estimate of the amount of active updating, validating our method's ability to separate persisting and non-persisting change. As discussed previously, views on gay marriage display high levels of active updating. In contrast, the item asking about support for legalizing marijuana use is reported with consistency but weak active updating. This is notable, as public opinion and policies regarding both have shifted considerably in recent years. Previous work suggests that change in both could be driven by the same underlying process [@schnabelsevell]. Our findings suggest that, at least in recent years, many individuals have changed their views on gay marriage, but changing views on marijuana have been driven primarily by cohort replacement. 
 
 # Discussion and Conclusions
 
@@ -527,19 +387,192 @@ Because many attitudes, including views on abortion, race, gender roles, social 
 Our results ultimately suggest that real, persistent attitude change is an uncommon phenomenon among adults. Understanding the social origins of individuals' attitudes requires greater focus on the "conditions of past production"—childhood and adolescence—that give rise to persistent beliefs in adulthood.
 
 
-
-
-
-
-
 \pagebreak
 
 # Appendix A: $\phi$ values for all variables
 
-Figures \ref{fig:phi_relig} through \ref{fig:phi_racgen} plot $\phi$ estimates for all items included in the analysis, grouped by subject material.
+Figures \@ref(fig:religphi) through \@ref(fig:racgenphi) plot $\phi$ estimates for all items included in the analysis, grouped by subject material.
+
+[Figures \@ref(fig:religphi) through \@ref(fig:racgenphi) about here.]
 
 ```{r loadfiguredata}
 load(here("data", "figure_data.Rdata"))
+```
+
+# Appendix B: Coarsened variable estimates
+
+```{r loadcoarse}
+load(here("data", "coarse_vars.Rdata"))
+
+```
+
+
+Estiates of $\phi$ for coarsened items are presented in Figures \@ref(fig:coarserelig) through \@ref(fig:coarseracgen). If scales had symmetrical scales with no clear midpoint (e.g., strongly agree/agree/disagree/strongly disagree), we coarsened those scales to two points (agree/disagree). If scales included a clear midpoint, we included that and coarsened responses on either side. For items on large scales such as hours of TV watched, we split responses into greater than the median or less than or equal to the median. If changes between ends of each scale are more persistent than changes within ends of these scales, then $\phi$ estimates of coarsened item should be higher than estimates for items with more response options. 
+
+[Figures \@ref(fig:coarserelig) through \@ref(fig:coarseracgen) about here.]
+
+Generally speaking, most items with no evidence of active updating continue to have no evidence of active updating when coarsened. For items that showed evidence for active updating, the coarsened estimates tended to be very similar to the uncoarsened estimates, suggesting that persisting and non-persisting changes happen about as often between ends of these scales as they do within ends of these scales.
+
+There are a couple notable departures from this general pattern. Several political questions -- general political views, views on whether the government should reduce inequality, and views on whether the government should help blacks -- show decreased evidence of persisting change when coarsened. This suggests that changes around the midpoint of the scale tend to be measurement error, a finding that is consistent with previous work suggesting that individuals without settled political views tend to choose points around the middle of the response scale [@converse].
+
+\pagebreak
+
+# References
+
+
+```{r dag, message=FALSE, fig.width=6.8, fig.cap="Graphical representation of active updating and settled dispositions models over time."}
+aum <- 
+  dagitty("dag {
+        y1 -> y2 -> y3 ;
+        v1 -> y1 ;
+        v2 -> y2 ;
+        v3 -> y3 
+        }")
+coordinates( aum ) <-
+  list( x=c(y1 = 1, y2 = 2, y3 = 3, v1 = 1, v2 = 2, v3 = 3),
+        y=c(y1 = 2, y2 = 2, y3 = 2, v1 = 1, v2 = 1, v3 = 1) )
+
+aum_dag <- aum %>% tidy_dagitty() %>% ggdag() + 
+  theme_dag_blank() + 
+  labs(title = "Active Updating Model") +
+  scale_y_continuous(limits = c(.8,3.2)) +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  theme(plot.margin = unit(c(1,1,.2,.2), "cm"))
+
+
+sdm <- 
+  dagitty("dag {
+        U -> {y1 y2 y3} ;
+        v1 -> y1 ;
+        v2 -> y2 ;
+        v3 -> y3 
+        }")
+coordinates( sdm ) <-
+  list( x=c(y1 = 1, y2 = 2, y3 = 3, v1 = 1, v2 = 2, v3 = 3, U = 2),
+        y=c(y1 = 2, y2 = 2, y3 = 2, v1 = 1, v2 = 1, v3 = 1, U = 3) )
+
+sdm_dag <- sdm %>% tidy_dagitty() %>% ggdag() + 
+  theme_dag_blank() + 
+  labs(title = "Settled Dispositions Model") +
+  scale_y_continuous(limits = c(.8,3.2)) +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  theme(plot.margin = unit(c(1,.2,.2,1), "cm"))
+
+
+gridExtra::grid.arrange(aum_dag, sdm_dag, ncol = 2)
+```
+
+```{r phihist, message=FALSE, fig.width=6.8, fig.cap="Distribution of phi estimates and probabilities that items show evidence of active updating."}
+
+res.df %>%
+  filter(grepl("_c", var)==FALSE) %>%
+  select(var, p, prob_aum) %>%
+  gather(key = "key", value = "value", -var) %>%
+  mutate(key = recode(key, "p"="Phi estimates (Updating)", "prob_aum"="Probability of some active updating")) %>%
+  ggplot(aes(x = value, y=..count../sum(..count..))) +
+  geom_histogram(fill = "gray", color = "black", bins = 15) + 
+  geom_vline(xintercept = .5, color = "black", linetype = 2) + 
+  theme_classic() + 
+  facet_wrap(~key, scales = "free_x") +
+  expand_limits(x = 1) +
+  labs(x = "", y = "Proportion of items") + 
+  theme(axis.title=element_text(size=9))
+```
+
+```{r agegroupcomparison, message=FALSE, fig.width=6.8, fig.height=8, fig.cap="Comparison of phi estimates for individuals over and equal to or less than 30 years old, with 95 percent confidence intervals."}
+
+load(here("data", "age_results.Rdata"))
+
+
+bind_rows(age.results) %>%
+  mutate(ci.lower = estimate - 1.96 * std.error,
+         ci.upper = estimate + 1.96 * std.error) %>%
+  left_join(attitude_vars) %>%
+  mutate(age = recode(age, "old"="Over 30", "young"="30 & under")) %>%
+  ggplot(aes(x = reorder(var.name, estimate), y = estimate, color = age)) + 
+  geom_hline(yintercept = .5, color = "black", linetype = 2) + 
+  geom_pointrange(aes(ymin = ci.lower, ymax = ci.upper)) + 
+  coord_flip() + 
+  theme_minimal() + 
+  scale_color_manual(values = c("black", "gray")) + 
+  labs(x = "", y = "Phi estimate (Updating)", color = "") +
+  theme(axis.text=element_text(size=7),
+        axis.title=element_text(size=9),
+        legend.position = "bottom")
+
+```
+
+```{r phibetascatter, message=FALSE, fig.width=6.8, fig.height = 6.0, fig.cap="Distribution of beta and phi estimates for GSS items, by whether model prefers phi = .5 constraint."}
+res.df %>%
+  filter(grepl("_c", var)==FALSE) %>%
+  mutate(aum = ifelse(var %in% aum_vars, "\nPersistent\nChange\n", "\nNo Persistent\nChange\n")) %>%
+  ggplot(aes(x = p, y = b1)) + 
+  geom_point(aes(fill = aum, shape = aum)) + 
+  scale_shape_manual(values = c(21, 22)) + 
+  scale_fill_manual(values = c("gray", "black")) + 
+  geom_text_repel(data = label_vars, aes(label = var.name), size = 3) + 
+  theme_minimal() +
+  labs(x = "Phi estimate (Updating)", y = "Beta estimate (Consistency)", fill = "", shape = "") + 
+  theme(axis.title=element_text(size=9))
+```
+
+```{r summary, message=FALSE, fig.width=6.8, fig.height=9.0, fig.cap="Summary of phi estimates for all items, by topical group. Numbers in parentheses indicate the number of items in each topical group."}
+load(here("data", "summary_plot_data.Rdata"))
+
+cat_counts <- attitude_vars %>% group_by(small.cat) %>% summarise(n = n())
+
+plot.data %>%
+  left_join(cat_counts) %>%
+  mutate(small.cat = paste(small.cat, " (", n, ")", sep = "")) %>%
+  ggplot(aes(x = reorder(small.cat, median))) + 
+  geom_pointrange(aes(y = median, ymin = q25, ymax = q75)) + 
+  geom_point(aes(y = min), shape = 21) + 
+  geom_point(aes(y = max),shape = 21) + 
+  geom_text(aes(y = max, label = var.name), size = 2, position = position_nudge(y = .07)) + 
+  coord_flip() + 
+  theme_minimal() + 
+  theme(
+    strip.background = element_blank(),
+    strip.text.x = element_blank(),
+    strip.placement = "outside",
+    legend.position = "none",
+    legend.title = element_blank(),
+    axis.text=element_text(size=9),
+    legend.text=element_text(size=9)
+    )  +
+  expand_limits(y = .9) +
+  labs(x = "", y = "Phi estimate (Updating)")
+
+```
+
+```{r polvariables, message=FALSE, fig.width=7, fig.height=8, fig.cap="Phi (updating) and beta (consistency) estimates for 43 political attitudes and identities."}
+left_join(res.df, attitude_vars) %>%
+  filter(small.cat %in% c("Politics & government", "Public spending",
+                          "Sex, sexuality & abortion") |
+           var %in% c("cappun", "divlaw", "gunlaw", "grass", "courts",
+                      "letin1a")) %>%
+  mutate(small.cat = ifelse(small.cat %in% c("Race & immigration", 
+                                             "Guns, laws, crime & police") | 
+                              var %in% c("prayer", "uswary"), 
+         "Misc. policy" , small.cat)) %>%
+  filter(var %!in% c("abscale6", "absingle", "teensex", "xmarsex",
+                     "homosex", "premarsx")) %>%
+  mutate(var.name = gsub("Government", "Gov't", var.name),
+         var.name = gsub("Abortion", "Abort", var.name),
+         small.cat = ifelse(small.cat == "Sex, sexuality & abortion",
+                            "Abortion & sex", small.cat)) %>%
+  mutate(small.cat = factor(small.cat, c("Politics & government", "Public spending",
+                                        "Abortion & sex", "Misc. policy"))) %>%
+  ggplot(aes(x = p, y = b1)) + 
+  geom_vline(xintercept = .5, linetype = 2, color = "gray") + 
+  geom_point(aes(fill = small.cat), shape = 21) + 
+  geom_text_repel(aes(label = var.name), size = 3) + 
+  theme_bw() + 
+  labs(x = "Phi estimate (Updating)", y = "Beta estimate (Consistency)", fill = "", shape = "") + 
+  theme(axis.title=element_text(size=9)) +
+  facet_wrap(~small.cat) + 
+  theme(legend.position = "none")
+
 ```
 
 ```{r religphi, message=FALSE, fig.width=6.8, fig.height=8.5, fig.cap="Phi estimates for items about religious activity and beliefs, social life, subjective SES, and suicide."}
@@ -652,16 +685,6 @@ clean.pestimates %>%
 ```
 
 
-# Appendix B: Coarsened variable estimates
-
-```{r loadcoarse}
-load(here("data", "coarse_vars.Rdata"))
-
-```
-
-
-$\phi$ estimates for coarsened items are presented in Figures \ref{fig:coarse_relig} through \ref{fig:coarse_racgen}. If scales had symmetrical scales with no clear midpoint (e.g., strongly agree/agree/disagree/strongly disagree), we coarsened those scales to two points (agree/disagree). If scales included a clear midpoint, we included that and coarsened responses on either side. For items on large scales such as hours of TV watched, we split responses into greater than the median or less than or equal to the median. If changes between ends of each scale are more persistent than changes within ends of these scales, then $\phi$ estimates of coarsened item should be higher than estimates for items with more response options. 
-
 ```{r coarserelig, message=FALSE, fig.width=6.8, fig.height=8.5, fig.cap="Phi estimates for coarsened questions about religion, subjective socioeconomic status, and morale." }
 coarse_vars %>%
   filter(small.cat %in% c("Relig. Activity", "Relig. identity & beliefs",
@@ -740,12 +763,4 @@ coarse_vars %>%
   expand_limits(y = .9) +
   labs(x = "", y = "Phi estimate (Updating)")
 ```
-
-Generally speaking, most items with no evidence of active updating continue to have no evidence of active updating when coarsened. For items that showed evidence for active updating, the coarsened estimates tended to be very similar to the uncoarsened estimates, suggesting that persisting and non-persisting changes happen about as often between ends of these scales as they do within ends of these scales.
-
-There are a couple notable departures from this general pattern. Several political questions -- general political views, views on whether the government should reduce inequality, and views on whether the government should help blacks -- show decreased evidence of persisting change when coarsened. This suggests that changes around the midpoint of the scale tend to be measurement error, a finding that is consistent with previous work suggesting that individuals without settled political views tend to choose points around the middle of the response scale [@converse].
-
-\pagebreak
-
-# References
 
