@@ -420,7 +420,7 @@ There are a couple notable departures from this general pattern. Several politic
 # References
 
 
-```{r dag, message=FALSE, fig.width=6.8, fig.cap="Graphical representation of active updating and settled dispositions models over time."}
+```{r dag, message=FALSE, fig.width=5, fig.cap="Graphical representation of active updating and settled dispositions models over time."}
 aum <- 
   dagitty("dag {
         y1 -> y2 -> y3 ;
@@ -429,15 +429,15 @@ aum <-
         v3 -> y3 
         }")
 coordinates( aum ) <-
-  list( x=c(y1 = 1, y2 = 2, y3 = 3, v1 = 1, v2 = 2, v3 = 3),
+  list( x=c(y1 = 1, y2 = 3, y3 = 5, v1 = 1, v2 = 3, v3 = 5),
         y=c(y1 = 2, y2 = 2, y3 = 2, v1 = 1, v2 = 1, v3 = 1) )
 
-aum_dag <- aum %>% tidy_dagitty() %>% ggdag() + 
+aum_dag <- aum %>% tidy_dagitty() %>% ggdag(node_size = 8) + 
   theme_dag_blank() + 
   labs(title = "Active Updating Model") +
   scale_y_continuous(limits = c(.8,3.2)) +
-  theme(plot.title = element_text(hjust = 0.5)) +
-  theme(plot.margin = unit(c(1,1,.2,.2), "cm"))
+  scale_x_continuous(limits = c(.5, 5.5)) + 
+  theme(plot.title = element_text(hjust = 0.5)) 
 
 
 sdm <- 
@@ -448,18 +448,18 @@ sdm <-
         v3 -> y3 
         }")
 coordinates( sdm ) <-
-  list( x=c(y1 = 1, y2 = 2, y3 = 3, v1 = 1, v2 = 2, v3 = 3, U = 2),
+  list( x=c(y1 = 1, y2 = 3, y3 = 5, v1 = 1, v2 = 3, v3 = 5, U = 3),
         y=c(y1 = 2, y2 = 2, y3 = 2, v1 = 1, v2 = 1, v3 = 1, U = 3) )
 
-sdm_dag <- sdm %>% tidy_dagitty() %>% ggdag() + 
+sdm_dag <- sdm %>% tidy_dagitty() %>% ggdag(node_size = 8) + 
   theme_dag_blank() + 
   labs(title = "Settled Dispositions Model") +
   scale_y_continuous(limits = c(.8,3.2)) +
-  theme(plot.title = element_text(hjust = 0.5)) +
-  theme(plot.margin = unit(c(1,.2,.2,1), "cm"))
+    scale_x_continuous(limits = c(.5, 5.5)) + 
+  theme(plot.title = element_text(hjust = 0.5)) 
 
 
-gridExtra::grid.arrange(aum_dag, sdm_dag, ncol = 2)
+gridExtra::grid.arrange(aum_dag, sdm_dag, nrow = 1)
 ```
 
 ```{r phihist, message=FALSE, fig.width=6.8, fig.cap="Distribution of phi estimates and probabilities that items show evidence of active updating."}
@@ -505,9 +505,9 @@ bind_rows(age.results) %>%
 ```{r phibetascatter, message=FALSE, fig.width=6.8, fig.height = 6.0, fig.cap="Distribution of beta and phi estimates for GSS items, by whether model prefers phi = .5 constraint."}
 res.df %>%
   filter(grepl("_c", var)==FALSE) %>%
-  mutate(aum = ifelse(var %in% aum_vars, "\nPersistent\nChange\n", "\nNo Persistent\nChange\n")) %>%
+  mutate(aum = ifelse(var %in% aum_vars, "\nPersistent\nChange\n", "\nNo\nPersistent\nChange\n")) %>%
   ggplot(aes(x = p, y = b1)) + 
-  geom_point(aes(fill = aum, shape = aum)) + 
+  geom_point(aes(fill = aum, shape = aum), alpha = .7) + 
   scale_shape_manual(values = c(21, 22)) + 
   scale_fill_manual(values = c("gray", "black")) + 
   geom_text_repel(data = label_vars, aes(label = var.name), size = 3) + 
@@ -523,6 +523,16 @@ cat_counts <- attitude_vars %>% group_by(small.cat) %>% summarise(n = n())
 
 plot.data %>%
   left_join(cat_counts) %>%
+    mutate(small.cat = ifelse(small.cat == "Sex, sexuality & abortion",
+                            "Sex, sexuality &\nabortion", small.cat),
+           small.cat = ifelse(small.cat == "Guns, laws, crime & police",
+                            "Guns, laws, crime &\npolice", small.cat),
+          small.cat = ifelse(small.cat == "Confidence in leadership",
+                            "Confidence in\nleadership", small.cat),
+          small.cat = ifelse(small.cat == "Relig. identity & beliefs",
+                            "Relig. identity &\nbeliefs", small.cat),
+          var.name = ifelse(var.name == "Executive branch", "Exe. branch", 
+                                   var.name)) %>%
   mutate(small.cat = paste(small.cat, " (", n, ")", sep = "")) %>%
   ggplot(aes(x = reorder(small.cat, median))) + 
   geom_pointrange(aes(y = median, ymin = q25, ymax = q75)) + 
@@ -537,7 +547,7 @@ plot.data %>%
     strip.placement = "outside",
     legend.position = "none",
     legend.title = element_blank(),
-    axis.text=element_text(size=9),
+    axis.text=element_text(size=7),
     legend.text=element_text(size=9)
     )  +
   expand_limits(y = .9) +
@@ -566,7 +576,7 @@ left_join(res.df, attitude_vars) %>%
   ggplot(aes(x = p, y = b1)) + 
   geom_vline(xintercept = .5, linetype = 2, color = "gray") + 
   geom_point(aes(fill = small.cat), shape = 21) + 
-  geom_text_repel(aes(label = var.name), size = 3) + 
+  geom_text_repel(aes(label = var.name), size = 1.75) + 
   theme_bw() + 
   labs(x = "Phi estimate (Updating)", y = "Beta estimate (Consistency)", fill = "", shape = "") + 
   theme(axis.title=element_text(size=9)) +
@@ -591,6 +601,7 @@ clean.pestimates %>%
   theme(
     strip.background = element_blank(),
     strip.text.x = element_blank(),
+    strip.text.y =element_text(size=8),
     strip.placement = "outside",
     legend.position = "none",
     legend.title = element_blank(),
@@ -620,6 +631,7 @@ clean.pestimates %>%
   theme(
     strip.background = element_blank(),
     strip.text.x = element_blank(),
+        strip.text.y =element_text(size=8),
     strip.placement = "outside",
     legend.position = "none",
     legend.title = element_blank(),
@@ -647,6 +659,7 @@ clean.pestimates %>%
   theme(
     strip.background = element_blank(),
     strip.text.x = element_blank(),
+            strip.text.y =element_text(size=8),
     strip.placement = "outside",
     legend.position = "none",
     legend.title = element_blank(),
@@ -673,6 +686,7 @@ clean.pestimates %>%
   theme(
     strip.background = element_blank(),
     strip.text.x = element_blank(),
+                strip.text.y =element_text(size=8),
     strip.placement = "outside",
     legend.position = "none",
     legend.title = element_blank(),
