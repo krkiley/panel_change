@@ -1,0 +1,280 @@
+---
+title: "Corrected Figures"
+author: "Kevin Kiley"
+date: "12/15/2021"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+library(ggdag)
+library(ggrepel)
+library(here)
+library(tidyverse)
+'%!in%' <- function(x,y)!('%in%'(x,y))
+```
+
+```{r, message = FALSE, warn = FALSE}
+load(here("correction", "results_df.Rdata"))
+load(here("data", "attitude_vars.Rdata"))
+
+
+label_vars <- res.df %>%
+  filter(var %in% c("intlblks", "confed", "selfhunt", "socbar")) %>%
+  left_join(attitude_vars)
+
+#create a list of variables that display updating
+aum_vars <- res.df %>% filter(aum_pref == 1)
+aum_vars <- aum_vars$var
+
+
+```
+
+```{r loadfiguredata}
+load(here("correction", "figure_data.Rdata"))
+```
+
+
+```{r loadcoarse}
+#load(here("correction", "coarse_vars.Rdata"))
+
+```
+
+```{r phihist, message=FALSE, fig.width=6.8, fig.cap="Distribution of phi estimates and probabilities that items show evidence of active updating."}
+
+res.df %>%
+  filter(grepl("_c", var)==FALSE) %>%
+  select(var, p, prob_aum) %>%
+  gather(key = "key", value = "value", -var) %>%
+  mutate(key = recode(key, "p"="Phi estimates (Updating)", "prob_aum"="Probability of some active updating")) %>%
+  ggplot(aes(x = value, y=..count../sum(..count..))) +
+  geom_histogram(fill = "gray", color = "black", bins = 15) + 
+  geom_vline(xintercept = .5, color = "black", linetype = 2) + 
+  theme_classic() + 
+  facet_wrap(~key, scales = "free_x") +
+  expand_limits(x = 1) +
+  labs(x = "", y = "Proportion of items") + 
+  theme(axis.title=element_text(size=9))
+```
+
+
+
+```{r agegroupcomparison, message=FALSE, fig.width=6.8, fig.height=8, fig.cap="Comparison of phi estimates for individuals over and equal to or less than 30 years old, with 95 percent confidence intervals."}
+
+load(here("correction", "age_results.Rdata"))
+
+
+bind_rows(age.results) %>%
+  mutate(ci.lower = estimate - 1.96 * std.error,
+         ci.upper = estimate + 1.96 * std.error) %>%
+  left_join(attitude_vars) %>%
+  mutate(age = recode(age, "old"="Over 30", "young"="30 & under")) %>%
+  ggplot(aes(x = reorder(var.name, estimate), y = estimate, color = age)) + 
+  geom_hline(yintercept = .5, color = "black", linetype = 2) + 
+  geom_pointrange(aes(ymin = ci.lower, ymax = ci.upper)) + 
+  coord_flip() + 
+  theme_minimal() + 
+  scale_color_manual(values = c("black", "gray")) + 
+  labs(x = "", y = "Phi estimate (Updating)", color = "") +
+  theme(axis.text=element_text(size=7),
+        axis.title=element_text(size=9),
+        legend.position = "bottom")
+
+```
+
+```{r phibetascatter, message=FALSE, fig.width=6.8, fig.height = 6.0, fig.cap="Distribution of beta and phi estimates for GSS items, by whether model prefers phi = .5 constraint."}
+res.df %>%
+  filter(grepl("_c", var)==FALSE) %>%
+  mutate(aum = ifelse(var %in% aum_vars, "\nPersistent\nChange\n", "\nNo\nPersistent\nChange\n")) %>%
+  ggplot(aes(x = p, y = b1)) + 
+  geom_point(aes(fill = aum, shape = aum), alpha = .7) + 
+  scale_shape_manual(values = c(21, 22)) + 
+  scale_fill_manual(values = c("gray", "black")) + 
+  geom_text_repel(data = label_vars, aes(label = var.name), size = 3) + 
+  theme_minimal() +
+  labs(x = "Phi estimate (Updating)", y = "Beta estimate (Consistency)", fill = "", shape = "") + 
+  theme(axis.title=element_text(size=9))
+```
+
+```{r summary, message=FALSE, fig.width=6.8, fig.height=9.0, fig.cap="Summary of phi estimates for all items, by topical group. Numbers in parentheses indicate the number of items in each topical group."}
+load(here("correction", "summary_plot_data.Rdata"))
+
+cat_counts <- attitude_vars %>% group_by(small.cat) %>% summarise(n = n())
+
+plot.data %>%
+  left_join(cat_counts) %>%
+    mutate(small.cat = ifelse(small.cat == "Sex, sexuality & abortion",
+                            "Sex, sexuality &\nabortion", small.cat),
+           small.cat = ifelse(small.cat == "Guns, laws, crime & police",
+                            "Guns, laws, crime &\npolice", small.cat),
+          small.cat = ifelse(small.cat == "Confidence in leadership",
+                            "Confidence in\nleadership", small.cat),
+          small.cat = ifelse(small.cat == "Relig. identity & beliefs",
+                            "Relig. identity &\nbeliefs", small.cat),
+          var.name = ifelse(var.name == "Executive branch", "Exe. branch", 
+                                   var.name)) %>%
+  mutate(small.cat = paste(small.cat, " (", n, ")", sep = "")) %>%
+  ggplot(aes(x = reorder(small.cat, median))) + 
+  geom_pointrange(aes(y = median, ymin = q25, ymax = q75)) + 
+  geom_point(aes(y = min), shape = 21) + 
+  geom_point(aes(y = max),shape = 21) + 
+  geom_text(aes(y = max, label = var.name), size = 2, position = position_nudge(y = .07)) + 
+  coord_flip() + 
+  theme_minimal() + 
+  theme(
+    strip.background = element_blank(),
+    strip.text.x = element_blank(),
+    strip.placement = "outside",
+    legend.position = "none",
+    legend.title = element_blank(),
+    axis.text=element_text(size=7),
+    legend.text=element_text(size=9)
+    )  +
+  expand_limits(y = .9) +
+  labs(x = "", y = "Phi estimate (Updating)")
+
+```
+
+```{r polvariables, message=FALSE, fig.width=7, fig.height=8, fig.cap="Phi (updating) and beta (consistency) estimates for 43 political attitudes and identities."}
+left_join(res.df, attitude_vars) %>%
+  filter(small.cat %in% c("Politics & government", "Public spending",
+                          "Sex, sexuality & abortion") |
+           var %in% c("cappun", "divlaw", "gunlaw", "grass", "courts",
+                      "letin1a")) %>%
+  mutate(small.cat = ifelse(small.cat %in% c("Race & immigration", 
+                                             "Guns, laws, crime & police") | 
+                              var %in% c("prayer", "uswary"), 
+         "Misc. policy" , small.cat)) %>%
+  filter(var %!in% c("abscale6", "absingle", "teensex", "xmarsex",
+                     "homosex", "premarsx")) %>%
+  mutate(var.name = gsub("Government", "Gov't", var.name),
+         var.name = gsub("Abortion", "Abort", var.name),
+         small.cat = ifelse(small.cat == "Sex, sexuality & abortion",
+                            "Abortion & sex", small.cat)) %>%
+  mutate(small.cat = factor(small.cat, c("Politics & government", "Public spending",
+                                        "Abortion & sex", "Misc. policy"))) %>%
+  ggplot(aes(x = p, y = b1)) + 
+  geom_vline(xintercept = .5, linetype = 2, color = "gray") + 
+  geom_point(aes(fill = small.cat), shape = 21) + 
+  geom_text_repel(aes(label = var.name), size = 1.75) + 
+  theme_bw() + 
+  labs(x = "Phi estimate (Updating)", y = "Beta estimate (Consistency)", fill = "", shape = "") + 
+  theme(axis.title=element_text(size=9)) +
+  facet_wrap(~small.cat) + 
+  theme(legend.position = "none")
+
+```
+
+```{r religphi, message=FALSE, fig.width=6.8, fig.height=8.5, fig.cap="Phi estimates for items about religious activity and beliefs, social life, subjective SES, and suicide."}
+clean.pestimates %>%
+  filter(grepl("_c", var)==FALSE) %>%
+  filter(small.cat %in% c("Relig. Activity", "Relig. identity & beliefs",
+                          "Social life", "Subjective SES", "Suicide")) %>%
+  ggplot(aes(x = reorder(var.name, estimate), y = estimate, color = as.factor(stable))) + 
+  geom_hline(yintercept = .5, linetype = 2, color = "gray") + 
+  geom_pointrange(aes(ymin = ci.lower, ymax = ci.upper)) + 
+  geom_point() + 
+  coord_flip() + 
+  theme_minimal() + 
+  facet_grid(small.cat ~ ., scales = "free_y", space = "free", switch = "both") + 
+  scale_color_manual(values = c("black", "darkgray")) + 
+  theme(
+    strip.background = element_blank(),
+    strip.text.x = element_blank(),
+    strip.text.y =element_text(size=8),
+    strip.placement = "outside",
+    legend.position = "none",
+    legend.title = element_blank(),
+    axis.text=element_text(size=7),
+    legend.text=element_text(size=7)
+  )  +
+  expand_limits(y = .9) +
+  labs(x = "", y = "Phi estimate (Updating)")
+
+```
+
+```{r poliphi, message=FALSE, fig.width=6.8, fig.height=8.5, fig.cap="Phi estimates for items about guns, law, crime and policing; politics and government; and public spending. The item 'Police can hit citizens', which has phi = .43, has been removed for ease of viewing"}
+
+clean.pestimates %>%
+  filter(grepl("_c", var)==FALSE) %>%
+  filter(small.cat %in% c("Guns, laws, crime & police", "Politics & government",
+                          "Public spending")) %>%
+  filter(var != "polhitok") %>%
+  ggplot(aes(x = reorder(var.name, estimate), y = estimate, color = as.factor(stable))) + 
+  geom_hline(yintercept = .5, linetype = 2, color = "gray") + 
+  geom_pointrange(aes(ymin = ci.lower, ymax = ci.upper)) + 
+  geom_point() + 
+  coord_flip() + 
+  theme_minimal() + 
+  facet_grid(small.cat ~ ., scales = "free_y", space = "free", switch = "both") + 
+  scale_color_manual(values = c("black", "darkgray")) + 
+  theme(
+    strip.background = element_blank(),
+    strip.text.x = element_blank(),
+        strip.text.y =element_text(size=8),
+    strip.placement = "outside",
+    legend.position = "none",
+    legend.title = element_blank(),
+    axis.text=element_text(size=7),
+    legend.text=element_text(size=7)
+  )  +
+  expand_limits(y = .9) +
+  labs(x = "", y = "Phi estimate (Updating)")
+
+```
+
+```{r civlibphi, message=FALSE, fig.width=6.8, fig.height=8.5, fig.cap="Phi estimates for items about civil liberties, confidence in leadership, health, morale, and social trust."}
+clean.pestimates %>%
+  filter(grepl("_c", var)==FALSE) %>%
+  filter(small.cat %in% c("Civil liberties", "Trust", "Confidence in leadership",
+                          "Health & morale")) %>%
+  ggplot(aes(x = reorder(var.name, estimate), y = estimate, color = as.factor(stable))) + 
+  geom_hline(yintercept = .5, linetype = 2, color = "gray") + 
+  geom_pointrange(aes(ymin = ci.lower, ymax = ci.upper)) + 
+  geom_point() + 
+  coord_flip() + 
+  theme_minimal() + 
+  facet_grid(small.cat ~ ., scales = "free_y", space = "free", switch = "both") + 
+  scale_color_manual(values = c("black", "darkgray")) + 
+  theme(
+    strip.background = element_blank(),
+    strip.text.x = element_blank(),
+            strip.text.y =element_text(size=8),
+    strip.placement = "outside",
+    legend.position = "none",
+    legend.title = element_blank(),
+    axis.text=element_text(size=7),
+    legend.text=element_text(size=7)
+  )  +
+  expand_limits(y = .9) +
+  labs(x = "", y = "Phi estimate (Updating)")
+```
+
+
+```{r racgenphi, message=FALSE, fig.width=6.8, fig.height=8.5, fig.cap="Phi estimates for items about race, gender, sex, sexuality, and abortion."}
+clean.pestimates %>%
+  filter(grepl("_c", var)==FALSE) %>%
+  filter(small.cat %in% c("Gender & family", "Race & immigration", "Sex, sexuality & abortion")) %>%
+  ggplot(aes(x = reorder(var.name, estimate), y = estimate, color = as.factor(stable))) + 
+  geom_hline(yintercept = .5, linetype = 2, color = "gray") + 
+  geom_pointrange(aes(ymin = ci.lower, ymax = ci.upper)) + 
+  geom_point() + 
+  coord_flip() + 
+  theme_minimal() + 
+  facet_grid(small.cat ~ ., scales = "free_y", space = "free", switch = "both") + 
+  scale_color_manual(values = c("black", "darkgray")) + 
+  theme(
+    strip.background = element_blank(),
+    strip.text.x = element_blank(),
+                strip.text.y =element_text(size=8),
+    strip.placement = "outside",
+    legend.position = "none",
+    legend.title = element_blank(),
+    axis.text=element_text(size=7),
+    legend.text=element_text(size=7)
+  )  +
+  expand_limits(y = .9) +
+  labs(x = "", y = "Phi estimate (Updating)")
+
+```
+

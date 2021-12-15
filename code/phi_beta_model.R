@@ -10,6 +10,7 @@ load("~/Desktop/panel_change/data/attitude_vars.Rdata")
 #Make a list of variables in the gss
 gss_vars <- attitude_vars$var
 
+
 #Function that creates a subset of the panel that is just a variable of 
 #interest, taken as a character vector, and omits missing cases
 cleanGSS <- function(var) {
@@ -18,7 +19,8 @@ cleanGSS <- function(var) {
     mutate(wave = paste("w", wave, sep = "")) %>%
     spread(wave, var) %>%
     na.omit() %>% filter(!is.infinite(minage)) %>%
-    mutate(var = var)
+    mutate(var = var) %>%
+    mutate(wtpannr123 = as.numeric(wtpannr123))
   return(data)
 }
 
@@ -40,7 +42,7 @@ for (i in 1:length(gss_vars)) {
               start = list(a = 0, b = 1, p = 0),
               weights = wtpannr123)
   bic1 <- BIC(nls1)
-  
+
   #Model that constrains phi to .5
   nls2 <- nls(y3 ~ a + b*.5*y2 + b*(.5)*y1,
               data = all.data,
@@ -70,6 +72,22 @@ res.df <- bind_rows(results) %>%
          bicdiff = bic1 - bic2,
          or_aum = exp(-bicdiff/2),
          prob_aum = or_aum/(or_aum + 1)) 
+
+new.res <- bind_rows(results) %>%
+  mutate(aum_pref = ifelse(bic1 < bic2, 1, 0),
+         bicdiff = bic1 - bic2,
+         or_aum = exp(-bicdiff/2),
+         prob_aum = or_aum/(or_aum + 1)) 
+
+
+
+test <- left_join(res.df, new.res, by = c("var" = "var")) 
+
+test %>% filter(aum_pref.x != aum_pref.y) %>% View()
+
+test %>%
+  ggplot(aes(x = bicdiff.x, y = bicdiff.y)) +
+  geom_point()
 
 #make a vector of variables that prefer the constraints
 stable <- res.df %>% 
@@ -269,4 +287,7 @@ label.points <- clean.pestimates %>%
 
 plot.data <- left_join(plot.data, label.points)
 save(plot.data, file = "~/Desktop/panel_change/data/summary_plot_data.Rdata")
+
+
+
 

@@ -1,0 +1,286 @@
+---
+title: "Correction"
+author:
+- Kevin Kiley
+- Stephen Vaisey
+date: "12/14/2021"
+output: pdf_document
+bibliography: panel_change_bib.bib
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+library(ggdag)
+library(ggrepel)
+library(here)
+library(tidyverse)
+'%!in%' <- function(x,y)!('%in%'(x,y))
+```
+
+We recently discovered that an error in the R source code for a function we used in the original analysis for our 2020 ASR paper, "Measuring Stability and Change in Personal Culture Using Panel Data," led to erroneous results, and we would like to correct the record. This bug, in which survey weights were incorrectly applied to residuals twice (rather than once) in calculating the log likelihood of non-linear least squares models, produces changes in how we classify some items as showing either “settled dispositions” or “active updating” throughout the paper, but it does not affect the overall pattern of results or our substantive interpretations of those results. We stand by the general claims we make in the paper.
+
+In our original paper, we estimated two non-linear least squares models -- one that modeled changes within people over time as random departures from a settled baseline (a settled dispositions model) and one that modeled changes within people over time as durable updates (an active updating model) -- for 183 variables from the General Social Survey's rotating three-wave panels. We then compared the fit of these two models using the Bayesian Information Criterion to evaluate which model better fit the observed data. We found the settled dispositions model was preferred for 75 questions, meaning there was no evidence of durable change for these items. We also found that even for questions where there was evidence of durable change, most change was not durable.
+
+We conducted this analysis using R version 3.5.3. In versions of R prior to 4.0.3, there was an error in the way R calculated the log likelihood of non-linear least squares models, which resulted in an incorrect calculation of the Bayesian Information Criterion. This led to errors in how we judged the two models against each other. 
+
+In versions of R prior to 4.0.3, the log likelihood of non-linear least squares models was calculated as:
+
+$$ - \frac{N}{2}(log(2\pi) + 1 - log(N) - \sum_{i=1}^N{log(w) + log(\sum_{i=1}^N{[w^2*(y - \hat{y})]^2})}) $$
+
+where $N$ is the number of observations, $w$ are survey weights, $y$ is the observed value of the outcome, and $\hat{y}$ is the predicted value of the outcome. The key issue for our analysis was that the formula applied survey weights to residuals twice ($w^2$ instead of $w$). The formula also did not divide the sum of the log of the weights by N. This latter issue produced incorrect log likelihood values, but because this term is constant across both models, it did not affect comparisons.
+
+The corrected calculation of the log likelihood for non-linear least squares models, implemented in version 4.0.3,[^patch] is:
+
+$$ - \frac{N}{2}(log(2\pi) + 1 - log(N) - \frac{\sum_{i=1}^N{log(w)}}{N} + log(\sum_{i=1}^N{[w*(y - \hat{y})]^2})) $$
+
+[^patch]: Documentation of the error can be found: https://bugs.r-project.org/show_bug.cgi?id=16100#c3
+
+Because the error lies in how survey weights were applied to calculation of the BIC, there is no clear pattern in how results changed when the correct formula was applied. Re-running our analyses with the corrected calculation produces slightly different results than what we presented in the published paper. Seventeen variables where we found a better fit for the stable disposition model prefer the active updating model under the corrected calculation. Fourteen variables where we found that the active updating model fit the data better prefer the settled dispositions model under the corrected calculation. This resulted in a net change of three more variables preferring the active updating model to the settled dispositions model (75, compared to 72 in the original analysis). The revised calculation also found fewer variables with a statistically significant difference between the $\phi$ estimates for people 30 and under and people over 30 (9 instead of 22), but the overall pattern of younger people showing more active updating is still consistent. 
+
+The items we labeled as "settled dispositions" under the incorrect calculation that are "active updating" under the corrected calculation are: abnomore, confinan, conjudge, contv, courts, fund, hapmar, misanthropy, neverrelact, polattak, reborn, socommun, socrel, spkath, spkrac, teensex, and xmovie.
+
+The items we labeled as "active updating" under the incorrect calculation that are "settled dispositions" under the corrected calculation are: aged, colrac, divlaw, getahead, marwht, meovrwrk, pillok, polhitok, racdif2, socfrend, suicide1, trust, uswary, and workblks.
+
+While fixing this calculation changes how these variables are classified, the erroneous calculation was unrelated to our estimates of $\phi$ or $\beta$, and the overall substantive conclusions of our paper, which we reproduced with different methods elsewhere [@vaisey2021], remain the same. 
+
+Corrected versions of Figures 2, 3, 4, 5, and A1-A4 are included below. Figures 1 and 6 were not affected by the change.
+
+We thank Hugo Mercier for bringing the discrepancy to our attention. We thank Sebastian Meyer for patching the function in R and for explaining the change in personal communications. 
+
+## Figures
+
+```{r, message = FALSE, warn = FALSE}
+load(here("correction", "results_df.Rdata"))
+load(here("data", "attitude_vars.Rdata"))
+
+
+label_vars <- res.df %>%
+  filter(var %in% c("intlblks", "confed", "selfhunt", "socbar")) %>%
+  left_join(attitude_vars)
+
+#create a list of variables that display updating
+aum_vars <- res.df %>% filter(aum_pref == 1)
+aum_vars <- aum_vars$var
+
+
+```
+
+```{r loadfiguredata}
+load(here("correction", "figure_data.Rdata"))
+```
+
+
+```{r loadcoarse}
+#load(here("correction", "coarse_vars.Rdata"))
+
+```
+
+```{r phihist, message=FALSE, fig.width=6.8, fig.cap="Distribution of phi estimates and probabilities that items show evidence of active updating."}
+
+res.df %>%
+  filter(grepl("_c", var)==FALSE) %>%
+  select(var, p, prob_aum) %>%
+  gather(key = "key", value = "value", -var) %>%
+  mutate(key = recode(key, "p"="Phi estimates (Updating)", "prob_aum"="Probability of some active updating")) %>%
+  ggplot(aes(x = value, y=..count../sum(..count..))) +
+  geom_histogram(fill = "gray", color = "black", bins = 15) + 
+  geom_vline(xintercept = .5, color = "black", linetype = 2) + 
+  theme_classic() + 
+  facet_wrap(~key, scales = "free_x") +
+  expand_limits(x = 1) +
+  labs(x = "", y = "Proportion of items") + 
+  theme(axis.title=element_text(size=9))
+```
+
+
+
+```{r agegroupcomparison, message=FALSE, fig.width=6.8, fig.height=8, fig.cap="Comparison of phi estimates for individuals over and equal to or less than 30 years old, with 95 percent confidence intervals."}
+
+load(here("correction", "age_results.Rdata"))
+
+
+bind_rows(age.results) %>%
+  mutate(ci.lower = estimate - 1.96 * std.error,
+         ci.upper = estimate + 1.96 * std.error) %>%
+  left_join(attitude_vars) %>%
+  mutate(age = recode(age, "old"="Over 30", "young"="30 & under")) %>%
+  ggplot(aes(x = reorder(var.name, estimate), y = estimate, color = age)) + 
+  geom_hline(yintercept = .5, color = "black", linetype = 2) + 
+  geom_pointrange(aes(ymin = ci.lower, ymax = ci.upper)) + 
+  coord_flip() + 
+  theme_minimal() + 
+  scale_color_manual(values = c("black", "gray")) + 
+  labs(x = "", y = "Phi estimate (Updating)", color = "") +
+  theme(axis.text=element_text(size=7),
+        axis.title=element_text(size=9),
+        legend.position = "bottom")
+
+```
+
+```{r phibetascatter, message=FALSE, fig.width=6.8, fig.height = 6.0, fig.cap="Distribution of beta and phi estimates for GSS items, by whether model prefers phi = .5 constraint."}
+res.df %>%
+  filter(grepl("_c", var)==FALSE) %>%
+  mutate(aum = ifelse(var %in% aum_vars, "\nPersistent\nChange\n", "\nNo\nPersistent\nChange\n")) %>%
+  ggplot(aes(x = p, y = b1)) + 
+  geom_point(aes(fill = aum, shape = aum), alpha = .7) + 
+  scale_shape_manual(values = c(21, 22)) + 
+  scale_fill_manual(values = c("gray", "black")) + 
+  geom_text_repel(data = label_vars, aes(label = var.name), size = 3) + 
+  theme_minimal() +
+  labs(x = "Phi estimate (Updating)", y = "Beta estimate (Consistency)", fill = "", shape = "") + 
+  theme(axis.title=element_text(size=9))
+```
+
+```{r summary, message=FALSE, fig.width=6.8, fig.height=9.0, fig.cap="Summary of phi estimates for all items, by topical group. Numbers in parentheses indicate the number of items in each topical group."}
+load(here("correction", "summary_plot_data.Rdata"))
+
+cat_counts <- attitude_vars %>% group_by(small.cat) %>% summarise(n = n())
+
+plot.data %>%
+  left_join(cat_counts) %>%
+    mutate(small.cat = ifelse(small.cat == "Sex, sexuality & abortion",
+                            "Sex, sexuality &\nabortion", small.cat),
+           small.cat = ifelse(small.cat == "Guns, laws, crime & police",
+                            "Guns, laws, crime &\npolice", small.cat),
+          small.cat = ifelse(small.cat == "Confidence in leadership",
+                            "Confidence in\nleadership", small.cat),
+          small.cat = ifelse(small.cat == "Relig. identity & beliefs",
+                            "Relig. identity &\nbeliefs", small.cat),
+          var.name = ifelse(var.name == "Executive branch", "Exe. branch", 
+                                   var.name)) %>%
+  mutate(small.cat = paste(small.cat, " (", n, ")", sep = "")) %>%
+  ggplot(aes(x = reorder(small.cat, median))) + 
+  geom_pointrange(aes(y = median, ymin = q25, ymax = q75)) + 
+  geom_point(aes(y = min), shape = 21) + 
+  geom_point(aes(y = max),shape = 21) + 
+  geom_text(aes(y = max, label = var.name), size = 2, position = position_nudge(y = .07)) + 
+  coord_flip() + 
+  theme_minimal() + 
+  theme(
+    strip.background = element_blank(),
+    strip.text.x = element_blank(),
+    strip.placement = "outside",
+    legend.position = "none",
+    legend.title = element_blank(),
+    axis.text=element_text(size=7),
+    legend.text=element_text(size=9)
+    )  +
+  expand_limits(y = .9) +
+  labs(x = "", y = "Phi estimate (Updating)")
+
+```
+
+```{r religphi, message=FALSE, fig.width=6.8, fig.height=8.5, fig.cap="Phi estimates for items about religious activity and beliefs, social life, subjective SES, and suicide."}
+clean.pestimates %>%
+  filter(grepl("_c", var)==FALSE) %>%
+  filter(small.cat %in% c("Relig. Activity", "Relig. identity & beliefs",
+                          "Social life", "Subjective SES", "Suicide")) %>%
+  ggplot(aes(x = reorder(var.name, estimate), y = estimate, color = as.factor(stable))) + 
+  geom_hline(yintercept = .5, linetype = 2, color = "gray") + 
+  geom_pointrange(aes(ymin = ci.lower, ymax = ci.upper)) + 
+  geom_point() + 
+  coord_flip() + 
+  theme_minimal() + 
+  facet_grid(small.cat ~ ., scales = "free_y", space = "free", switch = "both") + 
+  scale_color_manual(values = c("black", "darkgray")) + 
+  theme(
+    strip.background = element_blank(),
+    strip.text.x = element_blank(),
+    strip.text.y =element_text(size=8),
+    strip.placement = "outside",
+    legend.position = "none",
+    legend.title = element_blank(),
+    axis.text=element_text(size=7),
+    legend.text=element_text(size=7)
+  )  +
+  expand_limits(y = .9) +
+  labs(x = "", y = "Phi estimate (Updating)")
+
+```
+
+```{r poliphi, message=FALSE, fig.width=6.8, fig.height=8.5, fig.cap="Phi estimates for items about guns, law, crime and policing; politics and government; and public spending. The item 'Police can hit citizens', which has phi = .43, has been removed for ease of viewing"}
+
+clean.pestimates %>%
+  filter(grepl("_c", var)==FALSE) %>%
+  filter(small.cat %in% c("Guns, laws, crime & police", "Politics & government",
+                          "Public spending")) %>%
+  filter(var != "polhitok") %>%
+  ggplot(aes(x = reorder(var.name, estimate), y = estimate, color = as.factor(stable))) + 
+  geom_hline(yintercept = .5, linetype = 2, color = "gray") + 
+  geom_pointrange(aes(ymin = ci.lower, ymax = ci.upper)) + 
+  geom_point() + 
+  coord_flip() + 
+  theme_minimal() + 
+  facet_grid(small.cat ~ ., scales = "free_y", space = "free", switch = "both") + 
+  scale_color_manual(values = c("black", "darkgray")) + 
+  theme(
+    strip.background = element_blank(),
+    strip.text.x = element_blank(),
+        strip.text.y =element_text(size=8),
+    strip.placement = "outside",
+    legend.position = "none",
+    legend.title = element_blank(),
+    axis.text=element_text(size=7),
+    legend.text=element_text(size=7)
+  )  +
+  expand_limits(y = .9) +
+  labs(x = "", y = "Phi estimate (Updating)")
+
+```
+
+```{r civlibphi, message=FALSE, fig.width=6.8, fig.height=8.5, fig.cap="Phi estimates for items about civil liberties, confidence in leadership, health, morale, and social trust."}
+clean.pestimates %>%
+  filter(grepl("_c", var)==FALSE) %>%
+  filter(small.cat %in% c("Civil liberties", "Trust", "Confidence in leadership",
+                          "Health & morale")) %>%
+  ggplot(aes(x = reorder(var.name, estimate), y = estimate, color = as.factor(stable))) + 
+  geom_hline(yintercept = .5, linetype = 2, color = "gray") + 
+  geom_pointrange(aes(ymin = ci.lower, ymax = ci.upper)) + 
+  geom_point() + 
+  coord_flip() + 
+  theme_minimal() + 
+  facet_grid(small.cat ~ ., scales = "free_y", space = "free", switch = "both") + 
+  scale_color_manual(values = c("black", "darkgray")) + 
+  theme(
+    strip.background = element_blank(),
+    strip.text.x = element_blank(),
+            strip.text.y =element_text(size=8),
+    strip.placement = "outside",
+    legend.position = "none",
+    legend.title = element_blank(),
+    axis.text=element_text(size=7),
+    legend.text=element_text(size=7)
+  )  +
+  expand_limits(y = .9) +
+  labs(x = "", y = "Phi estimate (Updating)")
+```
+
+
+```{r racgenphi, message=FALSE, fig.width=6.8, fig.height=8.5, fig.cap="Phi estimates for items about race, gender, sex, sexuality, and abortion."}
+clean.pestimates %>%
+  filter(grepl("_c", var)==FALSE) %>%
+  filter(small.cat %in% c("Gender & family", "Race & immigration", "Sex, sexuality & abortion")) %>%
+  ggplot(aes(x = reorder(var.name, estimate), y = estimate, color = as.factor(stable))) + 
+  geom_hline(yintercept = .5, linetype = 2, color = "gray") + 
+  geom_pointrange(aes(ymin = ci.lower, ymax = ci.upper)) + 
+  geom_point() + 
+  coord_flip() + 
+  theme_minimal() + 
+  facet_grid(small.cat ~ ., scales = "free_y", space = "free", switch = "both") + 
+  scale_color_manual(values = c("black", "darkgray")) + 
+  theme(
+    strip.background = element_blank(),
+    strip.text.x = element_blank(),
+                strip.text.y =element_text(size=8),
+    strip.placement = "outside",
+    legend.position = "none",
+    legend.title = element_blank(),
+    axis.text=element_text(size=7),
+    legend.text=element_text(size=7)
+  )  +
+  expand_limits(y = .9) +
+  labs(x = "", y = "Phi estimate (Updating)")
+
+```
+
+

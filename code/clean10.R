@@ -217,16 +217,16 @@ gss.wide10 <- gss.long10 %>%
   spread(v, value)
 
 
-weight06 <- gss06 %>% mutate(idnum = paste0("06", "-", id_1)) %>% select(idnum, wtpannr123) 
-weight08 <- gss08 %>% mutate(idnum = paste0("08", "-", id_1)) %>% select(idnum, wtpannr123)
+weight06 <- gss06 %>% mutate(idnum = paste0("06", "-", id_1)) %>% select(idnum, wtpannr12, wtpannr123) 
+weight08 <- gss08 %>% mutate(idnum = paste0("08", "-", id_1)) %>% select(idnum, wtpannr12, wtpannr123)
 weight10 <- gss10 %>% mutate(idnum = paste0("10", "-", id_1),
-                             wtpannr123 = WTPANNR123) %>% select(idnum, wtpannr123)
+                             wtpannr123 = WTPANNR123) %>% select(idnum, wtpannr12, wtpannr123)
 all.weights <- bind_rows(weight06, weight08, weight10)
 
 
 gss.wide <- bind_rows(gss.wide06, gss.wide08, gss.wide10) %>% left_join(all.weights)
 gss.long <- gss.wide %>% 
-  gather(key = "variable", value = "value", -c(idnum, ds, minage, wtpannr123)) %>%
+  gather(key = "variable", value = "value", -c(idnum, ds, minage, wtpannr12, wtpannr123)) %>%
   separate(variable, into = c("var", "wave")) %>%
   spread(var, value) %>%
   mutate(ds = recode(ds, "gss06"="06", "gss08"="08", "gss10"="10"))
