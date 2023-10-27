@@ -6,6 +6,7 @@
 #### Load in a long version of the GSS panels.
 load("~/Desktop/panel_change/data/gsslong.Rdata")
 load("~/Desktop/panel_change/data/attitude_vars.Rdata")
+load("~/Desktop/panel_change/data/good_vars.Rdata")
 
 #Make a list of variables in the gss
 gss_vars <- attitude_vars$var
@@ -73,29 +74,13 @@ res.df <- bind_rows(results) %>%
          or_aum = exp(-bicdiff/2),
          prob_aum = or_aum/(or_aum + 1)) 
 
-new.res <- bind_rows(results) %>%
-  mutate(aum_pref = ifelse(bic1 < bic2, 1, 0),
-         bicdiff = bic1 - bic2,
-         or_aum = exp(-bicdiff/2),
-         prob_aum = or_aum/(or_aum + 1)) 
-
-
-
-test <- left_join(res.df, new.res, by = c("var" = "var")) 
-
-test %>% filter(aum_pref.x != aum_pref.y) %>% View()
-
-test %>%
-  ggplot(aes(x = bicdiff.x, y = bicdiff.y)) +
-  geom_point()
-
 #make a vector of variables that prefer the constraints
 stable <- res.df %>% 
   filter(aum_pref == 0)
 stable_vars <- stable$var
 
 #Save these data sets
-save(res.df, file = "~/Desktop/panel_change/data/results_df.Rdata")
+save(res.df, file = "~/Desktop/panel_change/correction/results_df.Rdata")
 
 #select only items where AUM is preferred
 aum_vars <- res.df %>% filter(aum_pref == 1)
@@ -219,7 +204,7 @@ for (i in 1:length(age_vars)) {
      t.young, t.old)
 }
 
-save(age.results, file = "~/Desktop/panel_change/data/age_results.Rdata")
+save(age.results, file = "~/Desktop/panel_change/correction/age_results.Rdata")
 
 bind_rows(age.results) %>%
   mutate(ci.lower = estimate - 1.96 * std.error,
@@ -267,7 +252,7 @@ clean.pestimates <- bind_rows(p.estimates) %>%
   mutate(ci.lower = ifelse(var %in% stable_vars, .5, ci.lower),
          ci.upper = ifelse(var %in% stable_vars, .5, ci.upper)) 
 
-save(clean.pestimates, file = "~/Desktop/panel_change/data/figure_data.Rdata")
+save(clean.pestimates, file = "~/Desktop/panel_change/correction/figure_data.Rdata")
 
 plot.data <- clean.pestimates %>%
   filter(!is.na(small.cat)) %>%
@@ -286,7 +271,7 @@ label.points <- clean.pestimates %>%
   select(small.cat, var.name)
 
 plot.data <- left_join(plot.data, label.points)
-save(plot.data, file = "~/Desktop/panel_change/data/summary_plot_data.Rdata")
+save(plot.data, file = "~/Desktop/panel_change/correction/summary_plot_data.Rdata")
 
 
 
